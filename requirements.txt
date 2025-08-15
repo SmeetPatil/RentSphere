@@ -1,0 +1,8 @@
+// npm install
+express
+nodemon
+express-session
+pg
+dotenv
+passport
+passport-google-oauth2
