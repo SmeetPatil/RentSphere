@@ -4,7 +4,7 @@ const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
 const { findUserByGoogleId, createUser, updateUser } = require('./userService');
 const { findPhoneUserById } = require('./phoneService');
-const pool = require('./database')
+const pool = require('../database')
 
 
 passport.serializeUser(function(user, done) {

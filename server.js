@@ -4,8 +4,8 @@ const session = require('express-session');
 const path = require('path');
 const axios = require('axios');
 require('dotenv').config();
-require('./passport');
-const { findUserByPhone, createPhoneUser, updatePhoneUser } = require('./phoneService');
+require('./auth/passport');
+const { findUserByPhone, createPhoneUser, updatePhoneUser } = require('./auth/phoneService');
 const app = express();
 
 
@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-
+//Create session
 app.use(session({
     resave: false,
     secret: ['key1','key2'],
@@ -44,7 +44,7 @@ const port = process.env.PORT;
 
 app.post('/admin/fix-profile-pictures', async (req, res) => {
     try {
-        const { updatePhoneUser } = require('./phoneService');
+        const { updatePhoneUser } = require('./auth/phoneService');
         const pool = require('./database');
 
         // Find all phone users with null profile pictures
@@ -342,7 +342,7 @@ app.post('/verify-otp', async (req, res) => {
         if (user) {
             // Existing user - check if profile picture needs to be updated
             if (!user.profile_picture) {
-                const { updatePhoneUser } = require('./phoneService');
+                const { updatePhoneUser } = require('./auth/phoneService');
                 user = await updatePhoneUser(fullPhoneNumber, {
                     name: user.name,
                     profilePicture: 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'

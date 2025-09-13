@@ -1,6 +1,6 @@
 // noinspection SqlResolve
 
-const pool = require('./database');
+const pool = require('../database');
 
 // Find user by Google ID
 async function findUserByGoogleId(googleId) {
