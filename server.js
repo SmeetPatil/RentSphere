@@ -41,6 +41,19 @@ app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
 
+// Debug endpoint to check environment
+app.get("/debug-env", (req, res) => {
+  res.json({
+    NODE_ENV: process.env.NODE_ENV,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "SET" : "NOT SET",
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "SET" : "NOT SET",
+    callbackURL:
+      process.env.NODE_ENV === "production"
+        ? "https://rentsphere-hzo2.onrender.com/google/callback"
+        : "http://localhost:8085/google/callback",
+  });
+});
+
 // Temporary database setup endpoint (remove after first run)
 app.get("/setup-database", async (req, res) => {
   try {
@@ -102,7 +115,9 @@ app.get("/setup-database", async (req, res) => {
     console.error("Database setup error:", error);
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error.message || "Unknown database error",
+      details: error.toString(),
+      stack: error.stack,
     });
   }
 });
