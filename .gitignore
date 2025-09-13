@@ -141,3 +141,8 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+#Useless files
+.idea/vcs.xml
+.idea/workspace.xml
+.vscode/settings.json
