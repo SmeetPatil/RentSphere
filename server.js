@@ -6,9 +6,9 @@ require("dotenv").config();
 require("./auth/passport");
 
 // Import route modules
-const pageRoutes = require('./routes/page.routes');
-const apiRoutes = require('./routes/api.routes');
-const authRoutes = require('./routes/auth.routes');
+const pageRoutes = require("./routes/page.routes");
+const apiRoutes = require("./routes/api.routes");
+const authRoutes = require("./routes/auth.routes");
 
 const app = express();
 
@@ -37,16 +37,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Use route modules
-app.use("/", pageRoutes);    // Page routes
-app.use("/", apiRoutes);     // API routes  
-app.use("/", authRoutes);    // Authentication routes
+app.use("/", pageRoutes); // Page routes
+app.use("/", apiRoutes); // API routes
+app.use("/", authRoutes); // Authentication routes
 
-const port = process.env.PORT;
+const port = process.env.PORT || 8085;
 
-
-
-app.listen(8085, () => {
-  console.log(
-    "RentSphere is running on port : " + port + " at ==> http://localhost:8085/"
-  );
+app.listen(port, () => {
+  console.log("RentSphere is running on port : " + port);
 });
