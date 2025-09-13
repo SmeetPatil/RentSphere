@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phone Login - RentSphere</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .phone-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .step.active {
+            background: #4285f4;
+            color: white;
+        }
+
+        .step.completed {
+            background: #48bb78;
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .country-code {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 16px;
+            width: 80px;
+            text-align: center;
+        }
+
+        .phone-input, .otp-input, .name-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .phone-input:focus, .otp-input:focus, .name-input:focus {
+            outline: none;
+            border-color: #4285f4;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        .btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s ease;
+            margin-bottom: 1rem;
+        }
+
+        .btn:hover {
+            background: #3367d6;
+        }
+
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .timer {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 0.75rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .back-to-login {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .back-to-login a {
+            color: #4285f4;
+            text-decoration: none;
+        }
+
+        .back-to-login a:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="phone-container">
+    <div class="logo">🌐 RentSphere</div>
+    <div class="tagline">Sign in with your phone number</div>
+
+    <div class="step-indicator">
+        <div class="step active" id="step1">1</div>
+        <div class="step" id="step2">2</div>
+        <div class="step" id="step3">3</div>
+    </div>
+
+    <!-- Phone Number Step -->
+    <div id="phoneStep">
+        <div class="form-group">
+            <label for="phoneNumber">Enter your phone number</label>
+            <div class="phone-input-group">
+                <input type="text" class="country-code" value="+91" readonly>
+                <input type="tel" id="phoneNumber" class="phone-input" placeholder="Enter 10-digit number" maxlength="10">
+            </div>
+        </div>
+        <button onclick="sendOTP()" class="btn" id="sendOtpBtn">
+            <span id="sendOtpText">Send OTP</span>
+            <span id="sendOtpLoader" class="loading hidden"></span>
+        </button>
+    </div>
+
+    <!-- OTP Verification Step -->
+    <div id="otpStep" class="hidden">
+        <div class="form-group">
+            <label for="otpCode">Enter OTP</label>
+            <input type="text" id="otpCode" class="otp-input" placeholder="4-digit OTP" maxlength="4">
+        </div>
+        <div class="timer" id="timer"></div>
+        <button onclick="verifyOTP()" class="btn" id="verifyOtpBtn">
+            <span id="verifyOtpText">Verify OTP</span>
+            <span id="verifyOtpLoader" class="loading hidden"></span>
+        </button>
+        <button onclick="resendOTP()" class="btn btn-secondary" id="resendBtn">Resend OTP</button>
+    </div>
+
+    <!-- Name Input Step (for new users) -->
+    <div id="nameStep" class="hidden">
+        <div class="form-group">
+            <label for="userName">Enter your name</label>
+            <input type="text" id="userName" class="name-input" placeholder="Your full name">
+        </div>
+        <button onclick="completeRegistration()" class="btn" id="completeBtn">
+            <span id="completeText">Complete Registration</span>
+            <span id="completeLoader" class="loading hidden"></span>
+        </button>
+    </div>
+
+    <div id="errorMessage" class="error-message hidden"></div>
+    <div id="successMessage" class="success-message hidden"></div>
+
+    <div class="back-to-login">
+        <a href="/login">← Back to login options</a>
+    </div>
+</div>
+
+<script>
+    let currentStep = 1;
+    let phoneNumber = '';
+    let otpTimer = null;
+    let timeLeft = 0;
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+        setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.textContent = message;
+        successDiv.classList.remove('hidden');
+        setTimeout(() => successDiv.classList.add('hidden'), 3000);
+    }
+
+    function updateStepIndicator(step) {
+        for (let i = 1; i <= 3; i++) {
+            const stepEl = document.getElementById(`step${i}`);
+            stepEl.classList.remove('active', 'completed');
+            if (i < step) {
+                stepEl.classList.add('completed');
+            } else if (i === step) {
+                stepEl.classList.add('active');
+            }
+        }
+    }
+
+    function showStep(step) {
+        document.getElementById('phoneStep').classList.add('hidden');
+        document.getElementById('otpStep').classList.add('hidden');
+        document.getElementById('nameStep').classList.add('hidden');
+
+        if (step === 1) {
+            document.getElementById('phoneStep').classList.remove('hidden');
+        } else if (step === 2) {
+            document.getElementById('otpStep').classList.remove('hidden');
+        } else if (step === 3) {
+            document.getElementById('nameStep').classList.remove('hidden');
+        }
+
+        currentStep = step;
+        updateStepIndicator(step);
+    }
+
+    function startTimer(duration) {
+        timeLeft = duration;
+        const timerEl = document.getElementById('timer');
+        const resendBtn = document.getElementById('resendBtn');
+
+        resendBtn.disabled = true;
+
+        otpTimer = setInterval(() => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerEl.textContent = `Resend OTP in ${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            if (timeLeft <= 0) {
+                clearInterval(otpTimer);
+                timerEl.textContent = 'You can now resend OTP';
+                resendBtn.disabled = false;
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    async function sendOTP() {
+        const phoneInput = document.getElementById('phoneNumber');
+        const phone = phoneInput.value.trim();
+
+        if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+            showError('Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        phoneNumber = '+91' + phone;
+
+        const btn = document.getElementById('sendOtpBtn');
+        const text = document.getElementById('sendOtpText');
+        const loader = document.getElementById('sendOtpLoader');
+
+        btn.disabled = true;
+        text.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/send-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ mobileNumber: phone })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showSuccess('OTP sent successfully!');
+                showStep(2);
+                startTimer(120); // 2 minutes
+            } else {
+                showError(result.message || 'Failed to send OTP');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            text.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+    }
+
+    async function verifyOTP() {
+        const otpInput = document.getElementById('otpCode');
+        const otp = otpInput.value.trim();
+
+        if (!otp || otp.length !== 4 || !/^\d+$/.test(otp)) {
+            showError('Please enter a valid 4-digit OTP');
+            return;
+        }
+
+        const btn = document.getElementById('verifyOtpBtn');
+        const text = document.getElementById('verifyOtpText');
+        const loader = document.getElementById('verifyOtpLoader');
+
+        btn.disabled = true;
+        text.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/verify-otp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mobileNumber: phoneNumber.substring(3), // Remove +91
+                    otp: otp
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                clearInterval(otpTimer);
+
+                if (result.isNewUser) {
+                    showStep(3);
+                } else {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                }
+            } else {
+                showError(result.message || 'Invalid OTP');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            text.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+    }
+
+    async function completeRegistration() {
+        const nameInput = document.getElementById('userName');
+        const name = nameInput.value.trim();
+
+        if (!name || name.length < 2) {
+            showError('Please enter your full name');
+            return;
+        }
+
+        const btn = document.getElementById('completeBtn');
+        const text = document.getElementById('completeText');
+        const loader = document.getElementById('completeLoader');
+
+        btn.disabled = true;
+        text.classList.add('hidden');
+        loader.classList.remove('hidden');
+
+        try {
+            const response = await fetch('/complete-phone-registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phone: phoneNumber,
+                    name: name
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showSuccess('Registration complete! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+            } else {
+                showError(result.message || 'Registration failed');
+            }
+        } catch (error) {
+            showError('Network error. Please try again.');
+        } finally {
+            btn.disabled = false;
+            text.classList.remove('hidden');
+            loader.classList.add('hidden');
+        }
+    }
+
+    function resendOTP() {
+        const phoneOnly = phoneNumber.substring(3); // Remove +91
+        document.getElementById('phoneNumber').value = phoneOnly;
+        showStep(1);
+    }
+
+    // Allow Enter key to proceed
+    document.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            if (currentStep === 1) {
+                sendOTP();
+            } else if (currentStep === 2) {
+                verifyOTP();
+            } else if (currentStep === 3) {
+                completeRegistration();
+            }
+        }
+    });
+</script>
+</body>
+</html>

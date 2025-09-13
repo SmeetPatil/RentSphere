@@ -1,4 +1,5 @@
 const pool = require('../database');
+require('dotenv').config();
 
 async function createUsersTable() {
     try {
@@ -26,5 +27,28 @@ async function createUsersTable() {
     }
 }
 
+async function createPhoneUsersTable() {
+    try{
+        const QUERY_2 = `
+        CREATE TABLE IF NOT EXISTS phone_users (
+            id SERIAL PRIMARY KEY,
+            phone VARCHAR(25) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            profile_picture VARCHAR(500) DEFAULT 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000' ,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        `;
+
+        await pool.query(QUERY_2);
+        console.log('Phone Users table created successfully.');
+
+    } catch (error) {
+        console.error('Error setting up database:', error);
+    }
+}
+
+
+
 // Run this function
-createUsersTable();
+createPhoneUsersTable();

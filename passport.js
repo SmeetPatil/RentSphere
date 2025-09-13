@@ -3,23 +3,35 @@ require('dotenv').config();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth2').Strategy;
 const { findUserByGoogleId, createUser, updateUser } = require('./userService');
+const { findPhoneUserById } = require('./phoneService');
 const pool = require('./database')
 
 
-passport.serializeUser(function(user,done) {
-    done(null,user.id);
+passport.serializeUser(function(user, done) {
+    const sessionData = {
+        id: user.id,
+        type: user.phone ? 'phone' : 'google' // Determine user type
+    };
+    console.log('Serializing user:', sessionData); // Debug log
+    done(null, sessionData);
 });
 
-passport.deserializeUser(async function(id, done) {
+passport.deserializeUser(async function(sessionData, done) {
     try {
-        const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-        if (result.rows.length === 0) {
-            return done(new Error('User not found'), null);
+        let user;
+        console.log('Deserializing user:', sessionData); // Debug log
+
+        if (sessionData.type === 'phone') {
+            user = await findPhoneUserById(sessionData.id); // Added await
+        } else {
+            const result = await pool.query('SELECT * FROM users WHERE id = $1', [sessionData.id]);
+            user = result.rows[0];
         }
-        console.log('Found user:', result.rows[0].email);
-        done(null, result.rows[0]);
+
+        console.log('Deserialized user:', user); // Debug log
+        done(null, user);
     } catch (error) {
-        console.error('Error deserializing user:', error);
+        console.error('Deserialization error:', error);
         done(error, null);
     }
 });
