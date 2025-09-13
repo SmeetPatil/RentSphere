@@ -41,6 +41,72 @@ app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
 
+// Temporary database setup endpoint (remove after first run)
+app.get("/setup-database", async (req, res) => {
+  try {
+    const pool = require("./database");
+
+    // Create users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        google_id VARCHAR(255) UNIQUE NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        profile_picture VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create phone_users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS phone_users (
+        id SERIAL PRIMARY KEY,
+        phone VARCHAR(25) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        profile_picture VARCHAR(500) DEFAULT 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create profile_info table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS profile_info (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255),
+        phone VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Create indexes
+    await pool.query(
+      "CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)"
+    );
+    await pool.query(
+      "CREATE INDEX IF NOT EXISTS idx_profile_info_email ON profile_info(email)"
+    );
+    await pool.query(
+      "CREATE INDEX IF NOT EXISTS idx_profile_info_phone ON profile_info(phone)"
+    );
+
+    res.json({
+      success: true,
+      message:
+        "Database tables created successfully! You can now remove this endpoint.",
+    });
+  } catch (error) {
+    console.error("Database setup error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 const port = process.env.PORT || 8085;
 
 app.listen(port, () => {
