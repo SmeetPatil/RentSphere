@@ -17,17 +17,17 @@ router.get("/login", (req, res) => {
   if (req.user) {
     return res.redirect("/dashboard");
   }
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "login.html"));
 });
 
 // Dashboard route
 router.get("/dashboard", isLoggedIn, (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
 // Profile page route
 router.get("/profile", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "profile.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "profile.html"));
 });
 
 // Phone verification page
@@ -35,7 +35,7 @@ router.get("/phone", (req, res) => {
   if (req.user) {
     return res.redirect("/dashboard");
   }
-  res.sendFile(path.join(__dirname, "public", "phone.html"));
+  res.sendFile(path.join(__dirname, "..", "public", "phone.html"));
 });
 
 // Authentication result routes
