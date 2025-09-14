@@ -16,8 +16,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, "public")));
+// Serve static files from public directory (legacy HTML files)
+app.use('/legacy', express.static(path.join(__dirname, "public")));
+
+// Serve React build files
+app.use(express.static(path.join(__dirname, "client/build")));
 
 // Create session
 app.use(
@@ -120,6 +123,11 @@ app.get("/setup-database", async (req, res) => {
       stack: error.stack,
     });
   }
+});
+
+// Serve React app for specific routes (safer than catch-all)
+app.get(['/', '/login', '/dashboard', '/profile'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
 });
 
 const port = process.env.PORT || 8085;

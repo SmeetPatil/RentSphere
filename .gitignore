@@ -147,7 +147,12 @@ vite.config.ts.timestamp-*
 .idea/workspace.xml
 .vscode/settings.json
 
-#Post Deployment
-package.json
-package-lock.json
-yarn.lock
+# Package management - keep local configs separate from deployment
+
+
+# But allow client package files
+!/client/package.json
+!/client/package-lock.json
+
+# React build output (will be built on deployment)
+/client/build/
