@@ -17,7 +17,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from public directory (legacy HTML files)
-app.use('/legacy', express.static(path.join(__dirname, "public")));
+app.use("/legacy", express.static(path.join(__dirname, "public")));
 
 // Serve React build files
 app.use(express.static(path.join(__dirname, "client/build")));
@@ -125,9 +125,14 @@ app.get("/setup-database", async (req, res) => {
   }
 });
 
-// Serve React app for specific routes (safer than catch-all)
-app.get(['/', '/login', '/dashboard', '/profile'], (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/build', 'index.html'));
+// Serve React app for specific frontend routes
+app.get(["/login", "/dashboard", "/profile"], (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+// Serve React app for root route
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
 const port = process.env.PORT || 8085;

@@ -12,23 +12,8 @@ router.get("/", (req, res) => {
   }
 });
 
-// Login page route
-router.get("/login", (req, res) => {
-  if (req.user) {
-    return res.redirect("/dashboard");
-  }
-  res.sendFile(path.join(__dirname, "..", "public", "login.html"));
-});
-
-// Dashboard route
-router.get("/dashboard", isLoggedIn, (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
-});
-
-// Profile page route
-router.get("/profile", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "profile.html"));
-});
+// These routes are now handled by React
+// The React app will handle /login, /dashboard, /profile routes
 
 // Phone verification page
 router.get("/phone", (req, res) => {
