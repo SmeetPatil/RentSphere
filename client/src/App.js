@@ -8,6 +8,10 @@ import {
 import axios from "axios";
 import "./App.css";
 
+import ConversationList from './components/Messaging/ConversationList';
+import Conversation from './components/Messaging/Conversation';
+import NewConversation from './components/Messaging/NewConversation';
+
 // Configure axios defaults
 axios.defaults.withCredentials = true;
 
@@ -101,6 +105,11 @@ function App() {
               user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
             }
           />
+          
+          {/* Messaging routes */}
+          <Route path="/messages" element={user ? <ConversationList /> : <Navigate to="/login" />} />
+          <Route path="/messages/:conversationId" element={user ? <Conversation /> : <Navigate to="/login" />} />
+          <Route path="/messages/new" element={user ? <NewConversation /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
@@ -318,9 +327,9 @@ function Dashboard({ user }) {
               <div className="action-icon">💬</div>
               <h4>Messages</h4>
               <p>Chat with other users</p>
-              <button className="action-btn" disabled>
-                Coming Soon
-              </button>
+              <a href="/messages" className="action-btn active">
+                Open Messages
+              </a>
             </div>
           </div>
         </section>

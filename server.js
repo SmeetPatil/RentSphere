@@ -9,6 +9,7 @@ require("./auth/passport");
 const pageRoutes = require("./routes/page.routes");
 const apiRoutes = require("./routes/api.routes");
 const authRoutes = require("./routes/auth.routes");
+const messagingRoutes = require("./routes/messaging.routes"); // Add this line
 
 const app = express();
 
@@ -21,6 +22,9 @@ app.use("/legacy", express.static(path.join(__dirname, "public")));
 
 // Serve React build files
 app.use(express.static(path.join(__dirname, "client/build")));
+
+// Serve React app's static files
+app.use(express.static("client/build"));
 
 // Create session
 app.use(
@@ -43,6 +47,7 @@ app.use(passport.session());
 app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
+app.use("/", messagingRoutes); // Messaging routes - Add this line
 
 // Debug endpoint to check environment
 app.get("/debug-env", (req, res) => {
@@ -125,13 +130,56 @@ app.get("/setup-database", async (req, res) => {
   }
 });
 
-// Serve React app for specific frontend routes
-app.get(["/login", "/dashboard", "/profile"], (req, res) => {
+// Setup messaging tables endpoint
+app.get("/setup-messaging-tables", async (req, res) => {
+  try {
+    const { createMessagingTables } = require("./setup/messaging-tables");
+    
+    // Create messaging tables
+    await createMessagingTables();
+    
+    res.json({
+      success: true,
+      message: "Messaging tables created successfully!",
+    });
+  } catch (error) {
+    console.error("Messaging tables setup error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Unknown database error",
+      details: error.toString(),
+      stack: error.stack,
+    });
+  }
+});
+
+// Define specific routes for React app
+app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
-// Serve React app for root route
-app.get("/", (req, res) => {
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/dashboard", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/profile", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/messages", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/messages/new", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+// Handle conversation detail routes with a regex pattern
+app.get(/^\/messages\/[a-zA-Z0-9]+$/, (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
