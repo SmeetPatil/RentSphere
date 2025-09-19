@@ -38,7 +38,10 @@ const ConversationList = () => {
   return (
     <div className="conversation-list">
       <div className="conversation-list-header">
-        <h2>Messages</h2>
+        <div className="header-left">
+          <Link to="/dashboard" className="back-to-dashboard-btn">← Dashboard</Link>
+          <h2>Messages</h2>
+        </div>
         <Link to="/messages/new" className="new-message-btn">New Message</Link>
       </div>
       

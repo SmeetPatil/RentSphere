@@ -108,7 +108,7 @@ function App() {
           
           {/* Messaging routes */}
           <Route path="/messages" element={user ? <ConversationList /> : <Navigate to="/login" />} />
-          <Route path="/messages/:conversationId" element={user ? <Conversation /> : <Navigate to="/login" />} />
+          <Route path="/messages/:conversationId" element={user ? <Conversation user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages/new" element={user ? <NewConversation /> : <Navigate to="/login" />} />
         </Routes>
       </div>

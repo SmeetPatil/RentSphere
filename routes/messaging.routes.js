@@ -31,11 +31,11 @@ router.get('/api/conversations', isLoggedIn, async (req, res) => {
         `;
 
         const result = await pool.query(query, [userId, userType]);
-        
+
         // Get other user details for each conversation
         const conversations = await Promise.all(result.rows.map(async (conv) => {
             let otherUser = null;
-            
+
             if (conv.other_user_type === 'google') {
                 const userResult = await pool.query(
                     'SELECT id, name, email, profile_picture FROM users WHERE id = $1',
@@ -84,19 +84,31 @@ router.get('/api/conversations/:conversationId/messages', isLoggedIn, async (req
             )
         `;
         const conversationResult = await pool.query(conversationQuery, [conversationId, userId, userType]);
-        
+
         if (conversationResult.rows.length === 0) {
             return res.status(403).json({ success: false, message: 'Access denied to this conversation' });
         }
 
         // Get messages
         const messagesQuery = `
-            SELECT * FROM messages
-            WHERE conversation_id = $1
-            ORDER BY created_at ASC
+            SELECT 
+                m.*,
+                CASE
+                    WHEN m.sender_type = 'google' THEN u.name
+                    WHEN m.sender_type = 'phone' THEN pu.name
+                END as sender_name,
+                CASE
+                    WHEN m.sender_type = 'google' THEN u.profile_picture
+                    WHEN m.sender_type = 'phone' THEN pu.profile_picture
+                END as sender_profile_picture
+            FROM messages m
+            LEFT JOIN users u ON m.sender_id = u.id AND m.sender_type = 'google'
+            LEFT JOIN phone_users pu ON m.sender_id = pu.id AND m.sender_type = 'phone'
+            WHERE m.conversation_id = $1
+            ORDER BY m.created_at ASC
         `;
         const messagesResult = await pool.query(messagesQuery, [conversationId]);
-        
+
         // Mark messages as read
         const updateQuery = `
             UPDATE messages
@@ -138,7 +150,7 @@ router.post('/api/conversations/:conversationId/messages', isLoggedIn, async (re
             )
         `;
         const conversationResult = await pool.query(conversationQuery, [conversationId, userId, userType]);
-        
+
         if (conversationResult.rows.length === 0) {
             return res.status(403).json({ success: false, message: 'Access denied to this conversation' });
         }
@@ -177,9 +189,9 @@ router.post('/api/conversations', isLoggedIn, async (req, res) => {
         const userType = req.user.google_id ? 'google' : 'phone';
 
         if (!recipientId || !recipientType || !initialMessage) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Recipient ID, type, and initial message are required' 
+            return res.status(400).json({
+                success: false,
+                message: 'Recipient ID, type, and initial message are required'
             });
         }
 
@@ -190,9 +202,9 @@ router.post('/api/conversations', isLoggedIn, async (req, res) => {
             OR (user1_id = $3 AND user1_type = $4 AND user2_id = $1 AND user2_type = $2)
         `;
         const checkResult = await pool.query(checkQuery, [userId, userType, recipientId, recipientType]);
-        
+
         let conversationId;
-        
+
         if (checkResult.rows.length > 0) {
             // Conversation exists
             conversationId = checkResult.rows[0].id;
@@ -225,8 +237,8 @@ router.post('/api/conversations', isLoggedIn, async (req, res) => {
         `;
         const updatedConversation = await pool.query(updateQuery, [newMessage.id, conversationId]);
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             conversation: updatedConversation.rows[0],
             message: newMessage
         });

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Messaging.css';
 
-const Conversation = () => {
+const Conversation = ({ user }) => {
   const { conversationId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -11,6 +11,9 @@ const Conversation = () => {
   const [error, setError] = useState(null);
   const [otherUser, setOtherUser] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Debug user object
+  console.log('Conversation component - User object:', user);
 
   // Fetch messages
   useEffect(() => {
@@ -93,21 +96,81 @@ const Conversation = () => {
         {messages.length === 0 ? (
           <div className="no-messages">No messages yet. Start the conversation!</div>
         ) : (
-          messages.map(message => {
-            const isCurrentUser = message.sender_id === (window.user?.id);
-            return (
-              <div 
-                key={message.id} 
-                className={`message ${isCurrentUser ? 'sent' : 'received'}`}
-              >
-                <div className="message-content">{message.message_text}</div>
-                <div className="message-time">
-                  {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </div>
-              </div>
-            );
-          })
-        )}
+                    messages.map(message => {
+                      // Determine current user type based on available contact info
+                      // Google users have email, phone users have phone as primary contact
+                      const currentUserType = user?.email ? 'google' : 'phone';
+                      
+                      // Compare both sender_id and sender_type
+                      const isCurrentUser = message.sender_id === user?.id && message.sender_type === currentUserType;
+                      
+                      console.log('Debug - Message ID:', message.id, 'Sender ID:', message.sender_id, 'Sender Type:', message.sender_type, 'User ID:', user?.id, 'User Type:', currentUserType, 'Is Current User:', isCurrentUser, 'Sender Name:', message.sender_name);
+                      
+                      const messageStyle = {
+                        display: 'flex',
+                        maxWidth: '60%',
+                        marginBottom: '8px',
+                        padding: '6px 10px',
+                        borderRadius: '16px',
+                        alignItems: 'flex-end',
+                        alignSelf: isCurrentUser ? 'flex-end' : 'flex-start',
+                        marginLeft: isCurrentUser ? 'auto' : '0',
+                        marginRight: isCurrentUser ? '0' : 'auto',
+                        backgroundColor: isCurrentUser ? '#007bff' : '#e9ecef',
+                        color: isCurrentUser ? 'white' : '#333',
+                        flexDirection: isCurrentUser ? 'row-reverse' : 'row'
+                      };
+
+                      return (
+                        <div 
+                          key={message.id} 
+                          className={`message ${isCurrentUser ? 'sent' : 'received'}`}
+                          style={messageStyle}>
+                          <img 
+                            src={message.sender_profile_picture || 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'} 
+                            alt={message.sender_name} 
+                            className="message-avatar"
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '50%',
+                              margin: isCurrentUser ? '0 0 0 6px' : '0 6px 0 0',
+                              flexShrink: 0
+                            }}
+                          />
+                          <div className="message-content" style={{
+                            padding: '3px 6px',
+                            borderRadius: '10px',
+                            backgroundColor: 'transparent'
+                          }}>
+                            {!isCurrentUser && (
+                              <div className="message-sender" style={{
+                                fontWeight: '600',
+                                fontSize: '12px',
+                                marginBottom: '2px',
+                                opacity: 0.8
+                              }}>
+                                {message.sender_name}
+                              </div>
+                            )}
+                            <div className="message-text" style={{
+                              lineHeight: '1.4',
+                              marginBottom: '2px'
+                            }}>
+                              {message.message_text}
+                            </div>
+                            <div className="message-time" style={{
+                              fontSize: '10px',
+                              opacity: 0.7,
+                              marginTop: '2px',
+                              textAlign: isCurrentUser ? 'right' : 'left'
+                            }}>
+                              {new Date(message.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })        )}
         <div ref={messagesEndRef} />
       </div>
 
