@@ -1262,4 +1262,93 @@
 
 .rental-card-map .leaflet-control-container {
   display: none !important;
+}/* Ima
+ge Gallery Styles */
+.main-image-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.main-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  display: block;
+}
+
+.image-nav-btn {
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.image-nav-btn:hover {
+  background: rgba(0, 0, 0, 0.9) !important;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.thumbnail-gallery {
+  scrollbar-width: thin;
+  scrollbar-color: #dc2626 #f1f5f9;
+}
+
+.thumbnail-gallery::-webkit-scrollbar {
+  height: 6px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb {
+  background: #dc2626;
+  border-radius: 3px;
+}
+
+.thumbnail-gallery::-webkit-scrollbar-thumb:hover {
+  background: #b91c1c;
+}
+
+.thumbnail-image:hover {
+  border-color: #ea580c !important;
+  transform: scale(1.05);
+}
+
+/* Image count indicators */
+.listing-image-container .image-count-badge,
+.my-listing-card .image-count-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  backdrop-filter: blur(4px);
+}
+
+/* Responsive image gallery */
+@media (max-width: 768px) {
+  .main-image {
+    height: 250px;
+  }
+  
+  .image-nav-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .thumbnail-image {
+    width: 60px !important;
+    height: 45px !important;
+  }
+  
+  .thumbnail-gallery {
+    gap: 8px !important;
+  }
 }

@@ -172,7 +172,7 @@ const MyListings = () => {
               <div className="my-listings-grid">
                 {listings.map(listing => (
                   <div key={listing.id} className="my-listing-card">
-                    <div className="listing-image-container">
+                    <div className="listing-image-container" style={{ position: 'relative' }}>
                       <img 
                         src={listing.images && listing.images.length > 0 
                           ? listing.images[0] 
@@ -187,6 +187,22 @@ const MyListings = () => {
                       <div className={`availability-badge ${listing.is_available ? 'active' : 'inactive'}`}>
                         {listing.is_available ? 'Active' : 'Inactive'}
                       </div>
+                      {/* Image count indicator */}
+                      {listing.images && listing.images.length > 1 && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '8px',
+                          left: '8px',
+                          background: 'rgba(0, 0, 0, 0.7)',
+                          color: 'white',
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          📸 {listing.images.length}
+                        </div>
+                      )}
                     </div>
                     
                     <div className="listing-content">

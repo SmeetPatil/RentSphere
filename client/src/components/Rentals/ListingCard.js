@@ -55,14 +55,32 @@ const ListingCard = ({ listing }) => {
 
   return (
     <Link to={`/rental/${listing.id}`} className="listing-card">
-      <img 
-        src={getImageSrc()}
-        alt={listing.title}
-        className="listing-image"
-        onError={(e) => {
-          e.target.src = getDefaultImage(listing.category);
-        }}
-      />
+      <div className="listing-image-container" style={{ position: 'relative' }}>
+        <img 
+          src={getImageSrc()}
+          alt={listing.title}
+          className="listing-image"
+          onError={(e) => {
+            e.target.src = getDefaultImage(listing.category);
+          }}
+        />
+        {/* Image count indicator */}
+        {listing.images && listing.images.length > 1 && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            background: 'rgba(0, 0, 0, 0.7)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 'bold'
+          }}>
+            📸 {listing.images.length}
+          </div>
+        )}
+      </div>
       
       <div className="listing-content">
         <h3 className="listing-title">{listing.title}</h3>

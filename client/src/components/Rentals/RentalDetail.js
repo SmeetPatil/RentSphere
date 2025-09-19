@@ -4,6 +4,140 @@ import axios from 'axios';
 import MapComponent from './MapComponent';
 import './Rentals.css';
 
+// Image Gallery Component
+const ImageGallery = ({ images, title, category, getDefaultImage }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  
+  const hasImages = images && images.length > 0;
+  const displayImages = hasImages ? images : [getDefaultImage(category)];
+  const currentImage = displayImages[currentImageIndex];
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
+  };
+
+  return (
+    <div className="rental-images">
+      {/* Main Image */}
+      <div className="main-image-container" style={{ position: 'relative' }}>
+        <img 
+          src={currentImage}
+          alt={`${title} - Image ${currentImageIndex + 1}`}
+          className="main-image"
+          onError={(e) => {
+            e.target.src = getDefaultImage(category);
+          }}
+        />
+        
+        {/* Navigation arrows for multiple images */}
+        {displayImages.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="image-nav-btn prev-btn"
+              style={{
+                position: 'absolute',
+                left: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ‹
+            </button>
+            <button
+              onClick={nextImage}
+              className="image-nav-btn next-btn"
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'rgba(0, 0, 0, 0.7)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50%',
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                fontSize: '18px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ›
+            </button>
+            
+            {/* Image counter */}
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              right: '10px',
+              background: 'rgba(0, 0, 0, 0.7)',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: '12px',
+              fontSize: '14px',
+              fontWeight: 'bold'
+            }}>
+              {currentImageIndex + 1} / {displayImages.length}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Thumbnail Gallery */}
+      {displayImages.length > 1 && (
+        <div className="thumbnail-gallery" style={{
+          display: 'flex',
+          gap: '10px',
+          marginTop: '15px',
+          overflowX: 'auto',
+          padding: '10px 0'
+        }}>
+          {displayImages.map((image, index) => (
+            <img
+              key={index}
+              src={image}
+              alt={`${title} - Thumbnail ${index + 1}`}
+              className="thumbnail-image"
+              onClick={() => setCurrentImageIndex(index)}
+              onError={(e) => {
+                e.target.src = getDefaultImage(category);
+              }}
+              style={{
+                width: '80px',
+                height: '60px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                border: index === currentImageIndex ? '3px solid #dc2626' : '2px solid #e2e8f0',
+                transition: 'all 0.3s ease',
+                flexShrink: 0
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const RentalDetail = () => {
   const { id } = useParams();
   const [listing, setListing] = useState(null);
@@ -204,19 +338,12 @@ const RentalDetail = () => {
         <div className="rental-detail">
           <div className="rental-detail-content">
             {/* Image Gallery */}
-            <div className="rental-images">
-              <img 
-                src={listing.images && listing.images.length > 0 
-                  ? listing.images[0] 
-                  : getDefaultImage(listing.category)
-                }
-                alt={listing.title}
-                className="main-image"
-                onError={(e) => {
-                  e.target.src = getDefaultImage(listing.category);
-                }}
-              />
-            </div>
+            <ImageGallery 
+              images={listing.images} 
+              title={listing.title}
+              category={listing.category}
+              getDefaultImage={getDefaultImage}
+            />
 
             {/* Main Info */}
             <div className="rental-info">
