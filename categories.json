@@ -1,0 +1,43 @@
+{
+  "cameras": "allowed",
+  "drones": "subject to permission",
+  "headphones": "allowed",
+  "laptops": "not allowed",
+  "phones": "not allowed",
+  "smartwatches": "not allowed",
+  "tablets": "allowed",
+  "tv": {
+    "led": "allowed",
+    "oled": "allowed",
+    "qled": "allowed",
+    "4k": "allowed"
+  },
+  "projectors": {
+    "vga": "allowed",
+    "hdmi": "allowed",
+    "4k": "allowed"
+  },
+  "speakers": {
+    "wired": "allowed",
+    "wireless": "allowed"
+  },
+  "gaming consoles": {
+    "playstation": {
+      "4": "allowed",
+      "5": "allowed"
+    },
+    "xbox": {
+      "series x": "allowed",
+      "series s": ""
+    },
+    "switch": "allowed"
+  },
+  "controllers": {
+    "ps4": "allowed",
+    "ps5": "allowed",
+    "xbox one": "allowed",
+    "xbox series x": "allowed",
+    "xbox series s": "allowed",
+    "switch": "allowed"
+  }
+}

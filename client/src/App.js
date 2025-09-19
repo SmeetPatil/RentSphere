@@ -11,6 +11,10 @@ import "./App.css";
 import ConversationList from './components/Messaging/ConversationList';
 import Conversation from './components/Messaging/Conversation';
 import NewConversation from './components/Messaging/NewConversation';
+import RentalBrowse from './components/Rentals/RentalBrowse';
+import CreateListing from './components/Rentals/CreateListing';
+import MyListings from './components/Rentals/MyListings';
+import RentalDetail from './components/Rentals/RentalDetail';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -110,6 +114,13 @@ function App() {
           <Route path="/messages" element={user ? <ConversationList /> : <Navigate to="/login" />} />
           <Route path="/messages/:conversationId" element={user ? <Conversation user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages/new" element={user ? <NewConversation /> : <Navigate to="/login" />} />
+          
+          {/* Rental routes */}
+          <Route path="/rentals" element={user ? <RentalBrowse /> : <Navigate to="/login" />} />
+          <Route path="/rentals/:category" element={user ? <RentalBrowse /> : <Navigate to="/login" />} />
+          <Route path="/rental/:id" element={user ? <RentalDetail /> : <Navigate to="/login" />} />
+          <Route path="/create-listing" element={user ? <CreateListing /> : <Navigate to="/login" />} />
+          <Route path="/my-listings" element={user ? <MyListings /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
@@ -303,32 +314,33 @@ function Dashboard({ user }) {
               <div className="action-icon">🔍</div>
               <h4>Browse Rentals</h4>
               <p>Discover amazing tech rentals in your area</p>
-              <button className="action-btn" disabled>
-                Coming Soon
-              </button>
+              <a href="/rentals" className="action-btn active">
+                Browse Now
+              </a>
             </div>
             <div className="action-card">
               <div className="action-icon">📝</div>
               <h4>List Your Item</h4>
               <p>Rent out your tech items and earn money</p>
-              <button className="action-btn" disabled>
-                Coming Soon
-              </button>
-            </div>
-            <div className="action-card">
-              <div className="action-icon">👤</div>
-              <h4>Manage Profile</h4>
-              <p>Update your account information</p>
-              <a href="/profile" className="action-btn active">
-                Manage
+              <a href="/create-listing" className="action-btn active">
+                Create Listing
               </a>
             </div>
+
             <div className="action-card">
               <div className="action-icon">💬</div>
               <h4>Messages</h4>
               <p>Chat with other users</p>
               <a href="/messages" className="action-btn active">
                 Open Messages
+              </a>
+            </div>
+            <div className="action-card">
+              <div className="action-icon">📋</div>
+              <h4>My Listings</h4>
+              <p>Manage your rental listings</p>
+              <a href="/my-listings" className="action-btn active">
+                View Listings
               </a>
             </div>
           </div>

@@ -9,7 +9,8 @@ require("./auth/passport");
 const pageRoutes = require("./routes/page.routes");
 const apiRoutes = require("./routes/api.routes");
 const authRoutes = require("./routes/auth.routes");
-const messagingRoutes = require("./routes/messaging.routes"); // Add this line
+const messagingRoutes = require("./routes/messaging.routes");
+const rentalRoutes = require("./routes/rental.routes");
 
 const app = express();
 
@@ -47,7 +48,8 @@ app.use(passport.session());
 app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
-app.use("/", messagingRoutes); // Messaging routes - Add this line
+app.use("/", messagingRoutes); // Messaging routes
+app.use("/", rentalRoutes); // Rental routes
 
 // Debug endpoint to check environment
 app.get("/debug-env", (req, res) => {
@@ -134,16 +136,40 @@ app.get("/setup-database", async (req, res) => {
 app.get("/setup-messaging-tables", async (req, res) => {
   try {
     const { createMessagingTables } = require("./setup/messaging-tables");
-    
+
     // Create messaging tables
     await createMessagingTables();
-    
+
     res.json({
       success: true,
       message: "Messaging tables created successfully!",
     });
   } catch (error) {
     console.error("Messaging tables setup error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Unknown database error",
+      details: error.toString(),
+      stack: error.stack,
+    });
+  }
+});
+
+// Setup rental tables endpoint (NEW for deployment)
+app.get("/setup-rental-tables", async (req, res) => {
+  try {
+    const { createRentalTables } = require("./setup/rental-tables-setup");
+
+    // Create rental tables
+    const result = await createRentalTables();
+
+    res.json({
+      success: true,
+      message: "Rental tables created successfully!",
+      details: result
+    });
+  } catch (error) {
+    console.error("Rental tables setup error:", error);
     res.status(500).json({
       success: false,
       error: error.message || "Unknown database error",
@@ -180,6 +206,27 @@ app.get("/messages/new", (req, res) => {
 
 // Handle conversation detail routes with a regex pattern
 app.get(/^\/messages\/[a-zA-Z0-9]+$/, (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+// Handle rental routes
+app.get("/rentals", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get(/^\/rentals\/[a-zA-Z0-9\s]+$/, (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get(/^\/rental\/[0-9]+$/, (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/create-listing", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/my-listings", (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 
