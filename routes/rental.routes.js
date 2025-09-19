@@ -503,13 +503,13 @@ router.delete('/api/listings/:id', isLoggedIn, async (req, res) => {
             });
         }
 
-        // Delete images from Google Drive
+        // Delete images from file system
         try {
-            const googleDriveService = require('../services/googleDriveService');
-            await googleDriveService.deleteListingImages(userName, userId, id);
+            const simpleImageService = require('../services/simpleImageService');
+            await simpleImageService.deleteListingImages(userName, userId, id);
             console.log(`🗑️ Deleted images for listing ${id}`);
         } catch (imageError) {
-            console.error('Error deleting images from Drive:', imageError);
+            console.error('Error deleting images:', imageError);
             // Continue with listing deletion even if image deletion fails
         }
 

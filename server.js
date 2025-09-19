@@ -22,6 +22,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from public directory (legacy HTML files)
 app.use("/legacy", express.static(path.join(__dirname, "public")));
 
+// Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Serve React build files
 app.use(express.static(path.join(__dirname, "client/build")));
 

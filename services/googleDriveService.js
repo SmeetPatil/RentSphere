@@ -6,55 +6,50 @@ const sharp = require('sharp');
 class GoogleDriveService {
     constructor() {
         this.drive = null;
-        this.parentFolderId = null; // Will store the main 'rentals' folder ID
+        this.parentFolderId = null;
+        this.oauth2Client = null;
         this.initializeDrive();
     }
 
     async initializeDrive() {
         try {
-            let auth;
+            console.log('🔧 Initializing Google Drive with OAuth...');
 
-            // Check if we have credentials in environment variable (for Render deployment)
-            if (process.env.GOOGLE_DRIVE_CREDENTIALS) {
-                // Create credentials file from environment variable
-                const credentials = JSON.parse(process.env.GOOGLE_DRIVE_CREDENTIALS);
-                const credentialsPath = path.join(__dirname, '..', 'google-drive-credentials.json');
-                
-                // Write credentials to file if it doesn't exist
-                if (!fs.existsSync(credentialsPath)) {
-                    fs.writeFileSync(credentialsPath, JSON.stringify(credentials, null, 2));
-                    console.log('📝 Created credentials file from environment variable');
-                }
-
-                auth = new google.auth.GoogleAuth({
-                    keyFile: credentialsPath,
-                    scopes: ['https://www.googleapis.com/auth/drive']
-                });
-            } else if (process.env.GOOGLE_DRIVE_KEY_FILE) {
-                // Use local credentials file
-                auth = new google.auth.GoogleAuth({
-                    keyFile: process.env.GOOGLE_DRIVE_KEY_FILE,
-                    scopes: ['https://www.googleapis.com/auth/drive']
-                });
-            } else {
-                throw new Error('Google Drive credentials not configured. Please set GOOGLE_DRIVE_KEY_FILE or GOOGLE_DRIVE_CREDENTIALS environment variable.');
+            // Check for OAuth credentials
+            if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REFRESH_TOKEN) {
+                console.error('❌ Missing OAuth credentials. Need: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN');
+                return;
             }
 
-            this.drive = google.drive({ version: 'v3', auth });
-            
+            // Create OAuth2 client
+            this.oauth2Client = new google.auth.OAuth2(
+                process.env.GOOGLE_CLIENT_ID,
+                process.env.GOOGLE_CLIENT_SECRET,
+                'http://localhost:3000/oauth/callback' // Redirect URI (not used in server)
+            );
+
+            // Set refresh token
+            this.oauth2Client.setCredentials({
+                refresh_token: process.env.GOOGLE_REFRESH_TOKEN
+            });
+
+            this.drive = google.drive({ version: 'v3', auth: this.oauth2Client });
+            console.log('✅ Google Drive OAuth client created');
+
             // Create or find the main 'rentals' folder
             await this.ensureRentalsFolder();
             
             console.log('✅ Google Drive service initialized successfully');
         } catch (error) {
             console.error('❌ Failed to initialize Google Drive service:', error);
-            console.error('Please check GOOGLE_DRIVE_SETUP.md for setup instructions');
+            this.drive = null;
+            this.parentFolderId = null;
         }
     }
 
     async ensureRentalsFolder() {
         try {
-            // Check if 'rentals' folder exists in service account's drive
+            // Check if 'rentals' folder exists
             const response = await this.drive.files.list({
                 q: "name='rentals' and mimeType='application/vnd.google-apps.folder' and trashed=false",
                 fields: 'files(id, name)'
@@ -64,7 +59,7 @@ class GoogleDriveService {
                 this.parentFolderId = response.data.files[0].id;
                 console.log('📁 Found existing rentals folder:', this.parentFolderId);
             } else {
-                // Create the rentals folder in service account's drive
+                // Create the rentals folder
                 const folderResponse = await this.drive.files.create({
                     requestBody: {
                         name: 'rentals',
@@ -75,8 +70,7 @@ class GoogleDriveService {
                 
                 this.parentFolderId = folderResponse.data.id;
                 console.log('📁 Created new rentals folder:', this.parentFolderId);
-                console.log('✅ Using service account\'s Google Drive for image storage');
-                console.log('✅ Images will be publicly accessible via direct links');
+                console.log('✅ Using your personal Google Drive for image storage');
             }
         } catch (error) {
             console.error('❌ Error managing rentals folder:', error);
@@ -208,8 +202,19 @@ class GoogleDriveService {
     async uploadListingImages(images, userName, userId, listingId) {
         try {
             if (!this.drive) {
-                throw new Error('Google Drive service not initialized');
+                const error = new Error('Google Drive service not initialized. Please check OAuth credentials.');
+                console.error('❌', error.message);
+                throw error;
             }
+
+            if (!this.parentFolderId) {
+                const error = new Error('Google Drive rentals folder not found. Service initialization may have failed.');
+                console.error('❌', error.message);
+                throw error;
+            }
+
+            console.log(`📸 Starting upload of ${images.length} images for listing ${listingId}`);
+            console.log(`👤 User: ${userName}(${userId})`);
 
             // Create folder structure
             const userFolderId = await this.createUserFolder(userName, userId);
@@ -217,6 +222,7 @@ class GoogleDriveService {
 
             const uploadPromises = images.map(async (image, index) => {
                 const fileName = `image${index + 1}.jpg`;
+                console.log(`📤 Uploading ${fileName} (${(image.buffer.length / 1024 / 1024).toFixed(2)}MB)`);
                 return await this.processAndUploadImage(image.buffer, fileName, listingFolderId);
             });
 
@@ -226,13 +232,17 @@ class GoogleDriveService {
             return uploadResults.map(result => result.imageUrl);
         } catch (error) {
             console.error('❌ Error uploading listing images:', error);
+            console.error('Error details:', {
+                message: error.message,
+                driveInitialized: !!this.drive,
+                parentFolderId: this.parentFolderId
+            });
             throw error;
         }
     }
 
     async deleteListingImages(userName, userId, listingId) {
         try {
-            const folderName = `${userName}(${userId})`;
             const listingFolderName = `listing_${listingId}`;
             
             // Find and delete the listing folder and all its contents
