@@ -46,6 +46,7 @@ router.post('/api/upload-images/:listingId', isLoggedIn, upload.array('images', 
         const userName = req.user.name.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize name for folder
         
         console.log(`📸 Uploading ${files.length} images for listing ${listingId} by user ${userName}(${userId})`);
+        console.log('Files received:', files.map(f => ({ name: f.originalname, size: f.size, type: f.mimetype })));
 
         // Upload images to Google Drive
         const imageUrls = await googleDriveService.uploadListingImages(

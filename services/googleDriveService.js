@@ -54,7 +54,7 @@ class GoogleDriveService {
 
     async ensureRentalsFolder() {
         try {
-            // Check if 'rentals' folder exists
+            // Check if 'rentals' folder exists in service account's drive
             const response = await this.drive.files.list({
                 q: "name='rentals' and mimeType='application/vnd.google-apps.folder' and trashed=false",
                 fields: 'files(id, name)'
@@ -64,7 +64,7 @@ class GoogleDriveService {
                 this.parentFolderId = response.data.files[0].id;
                 console.log('📁 Found existing rentals folder:', this.parentFolderId);
             } else {
-                // Create the rentals folder
+                // Create the rentals folder in service account's drive
                 const folderResponse = await this.drive.files.create({
                     requestBody: {
                         name: 'rentals',
@@ -75,6 +75,8 @@ class GoogleDriveService {
                 
                 this.parentFolderId = folderResponse.data.id;
                 console.log('📁 Created new rentals folder:', this.parentFolderId);
+                console.log('✅ Using service account\'s Google Drive for image storage');
+                console.log('✅ Images will be publicly accessible via direct links');
             }
         } catch (error) {
             console.error('❌ Error managing rentals folder:', error);
@@ -160,6 +162,12 @@ class GoogleDriveService {
                 })
                 .toBuffer();
 
+            // Convert Buffer to Stream for Google Drive API
+            const { Readable } = require('stream');
+            const imageStream = new Readable();
+            imageStream.push(processedImage);
+            imageStream.push(null); // End the stream
+
             // Upload to Google Drive
             const response = await this.drive.files.create({
                 requestBody: {
@@ -168,7 +176,7 @@ class GoogleDriveService {
                 },
                 media: {
                     mimeType: 'image/jpeg',
-                    body: processedImage
+                    body: imageStream
                 },
                 fields: 'id, webViewLink, webContentLink'
             });

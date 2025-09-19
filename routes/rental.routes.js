@@ -479,4 +479,205 @@ router.get('/api/rentals/:id', isLoggedIn, async (req, res) => {
     }
 });
 
+// Delete a listing (and its images)
+router.delete('/api/listings/:id', isLoggedIn, async (req, res) => {
+    try {
+        const pool = require('../database');
+        const { id } = req.params;
+        const userId = req.user.id;
+        const userType = req.user.google_id ? 'google' : 'phone';
+        const userName = req.user.name.replace(/[^a-zA-Z0-9]/g, '_');
+
+        // First, get the listing to verify ownership
+        const listingQuery = `
+            SELECT * FROM listings 
+            WHERE id = $1 AND user_id = $2 AND user_type = $3
+        `;
+        
+        const listingResult = await pool.query(listingQuery, [id, userId, userType]);
+        
+        if (listingResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Listing not found or you do not have permission to delete it'
+            });
+        }
+
+        // Delete images from Google Drive
+        try {
+            const googleDriveService = require('../services/googleDriveService');
+            await googleDriveService.deleteListingImages(userName, userId, id);
+            console.log(`🗑️ Deleted images for listing ${id}`);
+        } catch (imageError) {
+            console.error('Error deleting images from Drive:', imageError);
+            // Continue with listing deletion even if image deletion fails
+        }
+
+        // Delete the listing from database
+        const deleteQuery = `
+            DELETE FROM listings 
+            WHERE id = $1 AND user_id = $2 AND user_type = $3
+            RETURNING *
+        `;
+        
+        const result = await pool.query(deleteQuery, [id, userId, userType]);
+
+        res.json({
+            success: true,
+            message: 'Listing and associated images deleted successfully',
+            deletedListing: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error deleting listing:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete listing',
+            error: error.message
+        });
+    }
+});
+
+// Get a specific listing for editing
+router.get('/api/listings/:id/edit', isLoggedIn, async (req, res) => {
+    try {
+        const pool = require('../database');
+        const { id } = req.params;
+        const userId = req.user.id;
+        const userType = req.user.google_id ? 'google' : 'phone';
+
+        const query = `
+            SELECT * FROM listings 
+            WHERE id = $1 AND user_id = $2 AND user_type = $3
+        `;
+        
+        const result = await pool.query(query, [id, userId, userType]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Listing not found or you do not have permission to edit it'
+            });
+        }
+
+        res.json({
+            success: true,
+            listing: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error fetching listing for edit:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch listing details'
+        });
+    }
+});
+
+// Update a listing
+router.put('/api/listings/:id', isLoggedIn, async (req, res) => {
+    try {
+        const pool = require('../database');
+        const { id } = req.params;
+        const {
+            category,
+            subcategory,
+            title,
+            description,
+            pricePerDay,
+            specifications,
+            address,
+            latitude,
+            longitude
+        } = req.body;
+        
+        const userId = req.user.id;
+        const userType = req.user.google_id ? 'google' : 'phone';
+
+        // Validate required fields
+        if (!category || !title || !description || !pricePerDay || !address || !latitude || !longitude) {
+            return res.status(400).json({
+                success: false,
+                message: 'All required fields must be provided'
+            });
+        }
+
+        // Validate category against allowed categories
+        const fs = require('fs');
+        const path = require('path');
+        const categoriesPath = path.join(__dirname, '../categories.json');
+        let categories = {};
+        try {
+            categories = JSON.parse(fs.readFileSync(categoriesPath, 'utf8'));
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+
+        const allowedCategories = processCategories(categories);
+        const validCategory = allowedCategories.find(cat => cat.name === category);
+        if (!validCategory) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid category selected'
+            });
+        }
+
+        // Validate subcategory if provided
+        if (subcategory && validCategory.subcategories) {
+            const validSubcategory = validCategory.subcategories.find(sub => sub.name === subcategory);
+            if (!validSubcategory) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid subcategory selected'
+                });
+            }
+        }
+
+        // Update listing
+        const updateQuery = `
+            UPDATE listings 
+            SET category = $1, subcategory = $2, title = $3, description = $4,
+                price_per_day = $5, specifications = $6, latitude = $7, longitude = $8, 
+                address = $9, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $10 AND user_id = $11 AND user_type = $12
+            RETURNING *
+        `;
+        
+        const result = await pool.query(updateQuery, [
+            category,
+            subcategory || null,
+            title,
+            description,
+            parseFloat(pricePerDay),
+            specifications ? JSON.stringify(specifications) : null,
+            parseFloat(latitude),
+            parseFloat(longitude),
+            address,
+            id,
+            userId,
+            userType
+        ]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Listing not found or you do not have permission to update it'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Listing updated successfully!',
+            listing: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error updating listing:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update listing'
+        });
+    }
+});
+
 module.exports = router;

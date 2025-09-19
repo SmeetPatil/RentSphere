@@ -15,6 +15,7 @@ import RentalBrowse from './components/Rentals/RentalBrowse';
 import CreateListing from './components/Rentals/CreateListing';
 import MyListings from './components/Rentals/MyListings';
 import RentalDetail from './components/Rentals/RentalDetail';
+import EditListing from './components/Rentals/EditListing';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -120,6 +121,7 @@ function App() {
           <Route path="/rentals/:category" element={user ? <RentalBrowse /> : <Navigate to="/login" />} />
           <Route path="/rental/:id" element={user ? <RentalDetail /> : <Navigate to="/login" />} />
           <Route path="/create-listing" element={user ? <CreateListing /> : <Navigate to="/login" />} />
+          <Route path="/edit-listing/:id" element={user ? <EditListing /> : <Navigate to="/login" />} />
           <Route path="/my-listings" element={user ? <MyListings /> : <Navigate to="/login" />} />
         </Routes>
       </div>

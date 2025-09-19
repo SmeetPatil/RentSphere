@@ -181,6 +181,49 @@ app.get("/setup-rental-tables", async (req, res) => {
   }
 });
 
+// Debug Google Drive setup
+app.get("/debug-google-drive", async (req, res) => {
+  try {
+    const googleDriveService = require("./services/googleDriveService");
+    
+    // Force re-initialization to see current status
+    await googleDriveService.initializeDrive();
+    
+    // List files in service account's drive
+    let driveContents = [];
+    try {
+      const filesResponse = await googleDriveService.drive.files.list({
+        q: "trashed=false",
+        fields: 'files(id, name, mimeType, createdTime)',
+        pageSize: 20
+      });
+      driveContents = filesResponse.data.files;
+    } catch (listError) {
+      console.error('Error listing drive contents:', listError);
+    }
+    
+    res.json({
+      success: true,
+      message: "Google Drive debug info",
+      parentFolderId: googleDriveService.parentFolderId,
+      driveInitialized: !!googleDriveService.drive,
+      driveContents: driveContents,
+      status: {
+        setup: "Service account is using its own Google Drive space",
+        visibility: "You won't see these folders in your personal Drive",
+        functionality: "Images will work perfectly and be publicly accessible",
+        storage: "Uses your 2TB Google Drive quota through the service account"
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.toString()
+    });
+  }
+});
+
 // Define specific routes for React app
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
@@ -225,6 +268,10 @@ app.get(/^\/rental\/[0-9]+$/, (req, res) => {
 });
 
 app.get("/create-listing", (req, res) => {
+  res.sendFile(path.join(__dirname, "client/build", "index.html"));
+});
+
+app.get("/edit-listing/:id", (req, res) => {
   res.sendFile(path.join(__dirname, "client/build", "index.html"));
 });
 

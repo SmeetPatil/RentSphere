@@ -3,16 +3,19 @@
 ## 🚀 Step-by-Step Setup
 
 ### 1. Create Google Cloud Project
+
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Create a new project or select existing one
 3. Name it "RentSphere Drive Integration"
 
 ### 2. Enable Google Drive API
+
 1. In Google Cloud Console, go to "APIs & Services" > "Library"
 2. Search for "Google Drive API"
 3. Click on it and press "Enable"
 
 ### 3. Create Service Account
+
 1. Go to "APIs & Services" > "Credentials"
 2. Click "Create Credentials" > "Service Account"
 3. Name: `rentsphere-drive-service`
@@ -22,6 +25,7 @@
 7. Click "Done"
 
 ### 4. Generate Service Account Key
+
 1. In "Credentials", find your service account
 2. Click on the service account email
 3. Go to "Keys" tab
@@ -32,6 +36,7 @@
 8. Place it in your project root directory
 
 ### 5. Share Google Drive Folder
+
 1. Open your Google Drive
 2. The app will create a "rentals" folder automatically
 3. Once created, right-click the "rentals" folder
@@ -41,6 +46,7 @@
 7. Click "Send"
 
 ### 6. Environment Variables
+
 Add to your `.env` file:
 
 ```bash
@@ -49,7 +55,9 @@ GOOGLE_DRIVE_KEY_FILE=./google-drive-credentials.json
 ```
 
 ### 7. For Render Deployment
+
 1. **Upload credentials to Render**:
+
    - In Render dashboard, go to your service
    - Go to "Environment" tab
    - Add environment variable:
@@ -57,6 +65,7 @@ GOOGLE_DRIVE_KEY_FILE=./google-drive-credentials.json
      - Value: Copy the ENTIRE content of your `google-drive-credentials.json` file
 
 2. **Update environment variables**:
+
    ```bash
    GOOGLE_DRIVE_KEY_FILE=google-drive-credentials.json
    ```
@@ -67,6 +76,7 @@ GOOGLE_DRIVE_KEY_FILE=./google-drive-credentials.json
 ## 🔧 File Structure Created
 
 Your Google Drive will have this structure:
+
 ```
 📁 rentals/
   📁 john_doe(123)/
@@ -82,6 +92,7 @@ Your Google Drive will have this structure:
 ## ✅ Testing
 
 After setup, test with:
+
 1. Create a new rental listing
 2. Upload 1-5 images (max 5MB each)
 3. Check your Google Drive for the folder structure
@@ -105,14 +116,17 @@ After setup, test with:
 ## 🚨 Troubleshooting
 
 ### "Service account not found"
+
 - Check the service account email in credentials file
 - Ensure you shared the Drive folder with this email
 
 ### "Permission denied"
+
 - Make sure service account has "Editor" access to Drive folder
 - Check if Google Drive API is enabled
 
 ### "File not found"
+
 - Ensure `google-drive-credentials.json` is in the correct location
 - Check the `GOOGLE_DRIVE_KEY_FILE` environment variable path
 

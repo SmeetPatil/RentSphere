@@ -50,6 +50,30 @@ const MyListings = () => {
     }
   };
 
+  const deleteListing = async (listingId, listingTitle) => {
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${listingTitle}"?\n\nThis will permanently delete the listing and all its images from Google Drive. This action cannot be undone.`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      setLoading(true);
+      const response = await axios.delete(`/api/listings/${listingId}`);
+
+      if (response.data.success) {
+        // Remove the listing from state
+        setListings(prev => prev.filter(listing => listing.id !== listingId));
+        alert('Listing and images deleted successfully!');
+      }
+    } catch (err) {
+      console.error('Error deleting listing:', err);
+      alert('Failed to delete listing. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatPrice = (price) => {
     return `₹${parseFloat(price).toFixed(0)}`;
   };
@@ -213,6 +237,20 @@ const MyListings = () => {
                         >
                           View
                         </Link>
+                        <Link 
+                          to={`/edit-listing/${listing.id}`}
+                          className="view-btn"
+                          style={{ background: '#ea580c' }}
+                        >
+                          Edit
+                        </Link>
+                        <button
+                          onClick={() => deleteListing(listing.id, listing.title)}
+                          className="availability-btn deactivate"
+                          style={{ background: '#dc2626' }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
