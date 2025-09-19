@@ -17,6 +17,7 @@ const RentalDetail = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          console.log('Location obtained for rental detail:', position.coords.latitude, position.coords.longitude);
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude
@@ -24,7 +25,26 @@ const RentalDetail = () => {
         },
         (error) => {
           console.error('Error getting location:', error);
-          setError('Location access is required to view rental details');
+          let errorMessage = 'Location access is required to view rental details and calculate distance.';
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access was denied. Please enable location access to view rental details.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information is unavailable. Please check your connection.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out. Please refresh the page.';
+              break;
+          }
+          
+          setError(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
         }
       );
     } else {

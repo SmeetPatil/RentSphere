@@ -32,8 +32,8 @@ function App() {
     const updateTitle = () => {
       const path = window.location.pathname;
       let title = 'RentSphere - Your Gateway to Perfect Tech Rentals';
-      
-      switch(path) {
+
+      switch (path) {
         case '/login':
           title = 'Login - RentSphere';
           break;
@@ -49,12 +49,12 @@ function App() {
         default:
           title = 'RentSphere - Your Gateway to Perfect Tech Rentals';
       }
-      
+
       document.title = title;
     };
-    
+
     updateTitle();
-    
+
     // Listen for route changes
     window.addEventListener('popstate', updateTitle);
     return () => window.removeEventListener('popstate', updateTitle);
@@ -109,12 +109,12 @@ function App() {
               user ? <Navigate to="/dashboard" /> : <Navigate to="/login" />
             }
           />
-          
+
           {/* Messaging routes */}
           <Route path="/messages" element={user ? <ConversationList /> : <Navigate to="/login" />} />
           <Route path="/messages/:conversationId" element={user ? <Conversation user={user} /> : <Navigate to="/login" />} />
           <Route path="/messages/new" element={user ? <NewConversation /> : <Navigate to="/login" />} />
-          
+
           {/* Rental routes */}
           <Route path="/rentals" element={user ? <RentalBrowse /> : <Navigate to="/login" />} />
           <Route path="/rentals/:category" element={user ? <RentalBrowse /> : <Navigate to="/login" />} />
@@ -192,17 +192,376 @@ function LoginPage() {
 
 // Phone Login Page Component
 function PhoneLoginPage() {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [fullPhoneNumber, setFullPhoneNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Timer effect
+  useEffect(() => {
+    let interval = null;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft(timeLeft => timeLeft - 1);
+      }, 1000);
+    } else if (timeLeft === 0) {
+      setTimerActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft]);
+
+  const showError = (message) => {
+    setError(message);
+    setTimeout(() => setError(''), 5000);
+  };
+
+  const showSuccess = (message) => {
+    setSuccess(message);
+    setTimeout(() => setSuccess(''), 3000);
+  };
+
+  const sendOTP = async () => {
+    if (!phoneNumber || phoneNumber.length !== 10 || !/^\d+$/.test(phoneNumber)) {
+      showError('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setFullPhoneNumber('+91' + phoneNumber);
+    setLoading(true);
+
+    try {
+      const response = await fetch('/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobileNumber: phoneNumber })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showSuccess('OTP sent successfully!');
+        setCurrentStep(2);
+        setTimeLeft(120);
+        setTimerActive(true);
+      } else {
+        showError(result.message || 'Failed to send OTP');
+      }
+    } catch (error) {
+      showError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOTP = async () => {
+    if (!otpCode || otpCode.length !== 4 || !/^\d+$/.test(otpCode)) {
+      showError('Please enter a valid 4-digit OTP');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobileNumber: phoneNumber,
+          otp: otpCode
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setTimerActive(false);
+        if (result.isNewUser) {
+          setCurrentStep(3);
+        } else {
+          showSuccess('Login successful! Redirecting...');
+          setTimeout(() => window.location.href = '/dashboard', 1500);
+        }
+      } else {
+        showError(result.message || 'Invalid OTP');
+      }
+    } catch (error) {
+      showError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeRegistration = async () => {
+    if (!userName || userName.length < 2) {
+      showError('Please enter your full name');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/complete-phone-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: fullPhoneNumber,
+          name: userName
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showSuccess('Registration complete! Redirecting...');
+        setTimeout(() => window.location.href = '/dashboard', 1500);
+      } else {
+        showError(result.message || 'Registration failed');
+      }
+    } catch (error) {
+      showError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOTP = () => {
+    setCurrentStep(1);
+    setOtpCode('');
+    setTimerActive(false);
+    setTimeLeft(0);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      if (currentStep === 1) sendOTP();
+      else if (currentStep === 2) verifyOTP();
+      else if (currentStep === 3) completeRegistration();
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="login-container">
-      <div className="login-card">
-        <h1>📱 Phone Login</h1>
-        <p>This feature is still being migrated to React.</p>
-        <p>
-          For now, please use <a href="/phone">the original phone login</a>.
-        </p>
-        <a href="/login" className="back-btn">
-          ← Back to Login
-        </a>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="logo">🌐 RentSphere</div>
+        <div className="tagline">Sign in with your phone number</div>
+
+        {/* Step Indicator */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
+          {[1, 2, 3].map(step => (
+            <div
+              key={step}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                background: step < currentStep ? '#48bb78' : step === currentStep ? '#dc2626' : '#e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 0.5rem',
+                fontWeight: 'bold',
+                color: step <= currentStep ? 'white' : '#666'
+              }}
+            >
+              {step}
+            </div>
+          ))}
+        </div>
+
+        {/* Step 1: Phone Number */}
+        {currentStep === 1 && (
+          <div>
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '500' }}>
+                Enter your phone number
+              </label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input
+                  type="text"
+                  value="+91"
+                  readOnly
+                  style={{
+                    background: '#f7fafc',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '16px',
+                    width: '80px',
+                    textAlign: 'center'
+                  }}
+                />
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Enter 10-digit number"
+                  maxLength="10"
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    border: '2px solid #e2e8f0',
+                    borderRadius: '8px',
+                    fontSize: '16px',
+                    transition: 'border-color 0.3s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#dc2626'}
+                  onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                />
+              </div>
+            </div>
+            <button
+              onClick={sendOTP}
+              disabled={loading}
+              className="google-login-btn"
+              style={{ marginBottom: '1rem' }}
+            >
+              {loading ? (
+                <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s ease-in-out infinite' }}></div>
+              ) : (
+                'Send OTP'
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Step 2: OTP Verification */}
+        {currentStep === 2 && (
+          <div>
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '500' }}>
+                Enter OTP
+              </label>
+              <input
+                type="text"
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="4-digit OTP"
+                maxLength="4"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  transition: 'border-color 0.3s ease'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#dc2626'}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              />
+            </div>
+            {timerActive && (
+              <div style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1rem' }}>
+                Resend OTP in {formatTime(timeLeft)}
+              </div>
+            )}
+            <button
+              onClick={verifyOTP}
+              disabled={loading}
+              className="google-login-btn"
+              style={{ marginBottom: '1rem' }}
+            >
+              {loading ? (
+                <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s ease-in-out infinite' }}></div>
+              ) : (
+                'Verify OTP'
+              )}
+            </button>
+            <button
+              onClick={resendOTP}
+              disabled={timerActive}
+              className="phone-login-btn"
+            >
+              Resend OTP
+            </button>
+          </div>
+        )}
+
+        {/* Step 3: Name Input */}
+        {currentStep === 3 && (
+          <div>
+            <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#333', fontWeight: '500' }}>
+                Enter your name
+              </label>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Your full name"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  transition: 'border-color 0.3s ease'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#dc2626'}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              />
+            </div>
+            <button
+              onClick={completeRegistration}
+              disabled={loading}
+              className="google-login-btn"
+              style={{ marginBottom: '1rem' }}
+            >
+              {loading ? (
+                <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #ffffff', borderRadius: '50%', borderTopColor: 'transparent', animation: 'spin 1s ease-in-out infinite' }}></div>
+              ) : (
+                'Complete Registration'
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Error and Success Messages */}
+        {error && (
+          <div style={{
+            background: '#fed7d7',
+            color: '#c53030',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            fontSize: '0.9rem'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div style={{
+            background: '#c6f6d5',
+            color: '#2f855a',
+            padding: '0.75rem',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            fontSize: '0.9rem'
+          }}>
+            {success}
+          </div>
+        )}
+
+        <div className="footer" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '2px solid rgba(255, 255, 255, 0.3)' }}>
+          <a href="/login" style={{ color: '#dc2626', textDecoration: 'none' }}>
+            ← Back to login options
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -626,9 +985,8 @@ function Profile({ user, setUser }) {
 
           {message && (
             <div
-              className={`profile-message ${
-                message.includes("success") ? "success" : "error"
-              }`}
+              className={`profile-message ${message.includes("success") ? "success" : "error"
+                }`}
             >
               {message}
             </div>

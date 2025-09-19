@@ -17,22 +17,50 @@ const RentalBrowse = () => {
 
   // Get user location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          setError('Location access is required to browse rentals in your area');
-        }
-      );
-    } else {
-      setError('Geolocation is not supported by this browser');
-    }
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            console.log('Location obtained:', position.coords.latitude, position.coords.longitude);
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            });
+            setError(null); // Clear any previous errors
+          },
+          (error) => {
+            console.error('Geolocation error:', error);
+            let errorMessage = 'Location access is required to browse rentals in your area (15km radius).';
+            
+            switch(error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = 'Location access was denied. Please enable location access in your browser settings and refresh the page.';
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = 'Location information is unavailable. Please check your internet connection and try again.';
+                break;
+              case error.TIMEOUT:
+                errorMessage = 'Location request timed out. Please try again.';
+                break;
+              default:
+                errorMessage = 'An unknown error occurred while retrieving your location. Please try again.';
+                break;
+            }
+            
+            setError(errorMessage);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        );
+      } else {
+        setError('Geolocation is not supported by this browser. Please use a modern browser to access rental listings.');
+      }
+    };
+
+    getLocation();
   }, []);
 
   // Fetch categories
@@ -106,14 +134,79 @@ const RentalBrowse = () => {
     );
   }
 
+  const retryLocation = () => {
+    setError(null);
+    setLoading(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          console.log('Location retry successful:', position.coords.latitude, position.coords.longitude);
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setError(null);
+          setLoading(false);
+        },
+        (error) => {
+          console.error('Geolocation retry error:', error);
+          let errorMessage = 'Location access is still required to browse rentals.';
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = 'Location access was denied. Please enable location access in your browser settings and try again.';
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = 'Location information is unavailable. Please check your internet connection.';
+              break;
+            case error.TIMEOUT:
+              errorMessage = 'Location request timed out. Please try again.';
+              break;
+          }
+          
+          setError(errorMessage);
+          setLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 60000 // 1 minute for retry
+        }
+      );
+    }
+  };
+
   if (error) {
     return (
       <div className="rentals-page">
         <div className="rentals-container">
+          <div className="rentals-header">
+            <div className="header-left">
+              <Link to="/dashboard" className="back-to-dashboard-btn">
+                ← Dashboard
+              </Link>
+              <h1 className="rentals-title">Browse Rentals</h1>
+            </div>
+          </div>
           <div className="error">
             <h3>Location Required</h3>
             <p>{error}</p>
-            <p>Please enable location access to browse rentals in your area (15km radius).</p>
+            <div style={{ marginTop: '20px' }}>
+              <button 
+                onClick={retryLocation}
+                className="submit-btn"
+                style={{ marginRight: '10px' }}
+              >
+                🔄 Try Again
+              </button>
+              <p style={{ fontSize: '14px', color: '#666', marginTop: '15px' }}>
+                <strong>How to enable location:</strong><br/>
+                • Click the location icon in your browser's address bar<br/>
+                • Select "Allow" for location access<br/>
+                • Refresh the page if needed
+              </p>
+            </div>
           </div>
         </div>
       </div>

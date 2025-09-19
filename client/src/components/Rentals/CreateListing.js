@@ -25,6 +25,10 @@ const CreateListing = () => {
     longitude: ''
   });
 
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [imagePreview, setImagePreview] = useState([]);
+  const [imageUploading, setImageUploading] = useState(false);
+
   // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -188,6 +192,91 @@ const CreateListing = () => {
     return specs;
   };
 
+  const handleImageSelect = (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (files.length > 5) {
+      alert('Maximum 5 images allowed per listing');
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = [];
+    const previews = [];
+
+    files.forEach(file => {
+      if (!file.type.startsWith('image/')) {
+        alert(`${file.name} is not an image file`);
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is too large. Maximum 5MB per image.`);
+        return;
+      }
+
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        alert(`${file.name} must be JPEG or PNG format`);
+        return;
+      }
+
+      validFiles.push(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previews.push({
+          file: file,
+          preview: e.target.result,
+          name: file.name,
+          size: file.size
+        });
+        
+        if (previews.length === validFiles.length) {
+          setImagePreview(previews);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    setSelectedImages(validFiles);
+  };
+
+  const removeImage = (index) => {
+    const newImages = selectedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreview.filter((_, i) => i !== index);
+    setSelectedImages(newImages);
+    setImagePreview(newPreviews);
+  };
+
+  const uploadImages = async (listingId) => {
+    if (selectedImages.length === 0) return [];
+
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      selectedImages.forEach(image => {
+        formData.append('images', image);
+      });
+
+      const response = await axios.post(`/api/upload-images/${listingId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.data.success) {
+        return response.data.images;
+      }
+      throw new Error(response.data.message);
+    } catch (err) {
+      console.error('Error uploading images:', err);
+      throw err;
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -196,20 +285,38 @@ const CreateListing = () => {
       return;
     }
 
+    if (selectedImages.length === 0) {
+      setError('Please add at least one image of your rental item');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
+      // First create the listing
       const response = await axios.post('/api/listings', {
         ...formData,
         pricePerDay: parseFloat(formData.pricePerDay)
       });
 
       if (response.data.success) {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/my-listings');
-        }, 2000);
+        const listingId = response.data.listing.id;
+        
+        // Then upload images
+        try {
+          await uploadImages(listingId);
+          setSuccess(true);
+          setTimeout(() => {
+            navigate('/my-listings');
+          }, 2000);
+        } catch (imageError) {
+          // Listing created but image upload failed
+          setError('Listing created but failed to upload images. You can add images later from "My Listings".');
+          setTimeout(() => {
+            navigate('/my-listings');
+          }, 3000);
+        }
       }
     } catch (err) {
       console.error('Error creating listing:', err);
@@ -380,6 +487,102 @@ const CreateListing = () => {
               </div>
             </div>
 
+            {/* Images */}
+            <div className="form-section">
+              <h3>Images *</h3>
+              <div className="form-group">
+                <label>Upload Images (Max 5, 5MB each)</label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png"
+                  onChange={handleImageSelect}
+                  style={{
+                    padding: '12px',
+                    border: '2px dashed #e2e8f0',
+                    borderRadius: '8px',
+                    width: '100%',
+                    cursor: 'pointer'
+                  }}
+                />
+                <small>Upload clear photos of your item. JPEG/PNG only, max 5MB each.</small>
+              </div>
+
+              {/* Image Previews */}
+              {imagePreview.length > 0 && (
+                <div className="image-preview-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                  gap: '15px',
+                  marginTop: '15px'
+                }}>
+                  {imagePreview.map((img, index) => (
+                    <div key={index} style={{
+                      position: 'relative',
+                      border: '2px solid #e2e8f0',
+                      borderRadius: '8px',
+                      overflow: 'hidden'
+                    }}>
+                      <img
+                        src={img.preview}
+                        alt={`Preview ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '120px',
+                          objectFit: 'cover'
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        style={{
+                          position: 'absolute',
+                          top: '5px',
+                          right: '5px',
+                          background: '#dc2626',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '25px',
+                          height: '25px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        ×
+                      </button>
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '0',
+                        left: '0',
+                        right: '0',
+                        background: 'rgba(0,0,0,0.7)',
+                        color: 'white',
+                        padding: '4px',
+                        fontSize: '12px',
+                        textAlign: 'center'
+                      }}>
+                        {(img.size / 1024 / 1024).toFixed(1)}MB
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedImages.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  border: '2px dashed #e2e8f0',
+                  borderRadius: '8px',
+                  marginTop: '10px',
+                  color: '#666'
+                }}>
+                  📸 No images selected. Please add at least one image of your rental item.
+                </div>
+              )}
+            </div>
+
             {/* Location */}
             <div className="form-section">
               <h3>Location</h3>
@@ -401,14 +604,23 @@ const CreateListing = () => {
               <button
                 type="submit"
                 className="submit-btn"
-                disabled={loading}
+                disabled={loading || imageUploading}
               >
-                {loading ? 'Creating Listing...' : 'Create Listing'}
+                {loading && !imageUploading && 'Creating Listing...'}
+                {imageUploading && 'Uploading Images...'}
+                {!loading && !imageUploading && 'Create Listing'}
               </button>
               <Link to="/dashboard" className="cancel-btn">
                 Cancel
               </Link>
             </div>
+            
+            {(loading || imageUploading) && (
+              <div style={{ textAlign: 'center', marginTop: '15px', color: '#666' }}>
+                {loading && !imageUploading && '📝 Creating your listing...'}
+                {imageUploading && '📸 Uploading images to Google Drive...'}
+              </div>
+            )}
           </form>
         </div>
       </div>

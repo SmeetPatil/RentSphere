@@ -15,12 +15,12 @@ router.get("/", (req, res) => {
 // These routes are now handled by React
 // The React app will handle /login, /dashboard, /profile routes
 
-// Phone verification page
+// Phone verification page (now served by React)
 router.get("/phone", (req, res) => {
   if (req.user) {
     return res.redirect("/dashboard");
   }
-  res.sendFile(path.join(__dirname, "..", "public", "phone.html"));
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
 });
 
 // Authentication result routes

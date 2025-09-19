@@ -11,6 +11,7 @@ const apiRoutes = require("./routes/api.routes");
 const authRoutes = require("./routes/auth.routes");
 const messagingRoutes = require("./routes/messaging.routes");
 const rentalRoutes = require("./routes/rental.routes");
+const imageRoutes = require("./routes/image.routes");
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
 app.use("/", messagingRoutes); // Messaging routes
 app.use("/", rentalRoutes); // Rental routes
+app.use("/", imageRoutes); // Image upload routes
 
 // Debug endpoint to check environment
 app.get("/debug-env", (req, res) => {

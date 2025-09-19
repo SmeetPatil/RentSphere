@@ -156,4 +156,4 @@ vite.config.ts.timestamp-*
 
 # React build output (will be built on deployment)
 /client/build/
-RENTAL_DEPLOYMENT.md
+google-drive-credentials.json
