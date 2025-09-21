@@ -198,19 +198,13 @@ app.get("/setup-rental-requests", async (req, res) => {
     const schemaPath = path.join(__dirname, "setup", "rental-requests-schema.sql");
     const schema = fs.readFileSync(schemaPath, "utf8");
 
-    // Split by semicolon and execute each statement
-    const statements = schema.split(";").filter(stmt => stmt.trim());
-    
-    for (const statement of statements) {
-      if (statement.trim()) {
-        await pool.query(statement);
-      }
-    }
+    // Execute the entire schema as one statement to handle functions properly
+    await pool.query(schema);
 
     res.json({
       success: true,
       message: "Rental requests schema deployed successfully!",
-      details: `Executed ${statements.length} SQL statements`
+      details: "Executed complete SQL schema"
     });
   } catch (error) {
     console.error("Rental requests setup error:", error);

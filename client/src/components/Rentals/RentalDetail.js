@@ -27,7 +27,7 @@ const ImageGallery = ({ images, title, category, getDefaultImage }) => {
       <div className="main-image-container" style={{ position: 'relative' }}>
         <img 
           src={currentImage}
-          alt={`${title} - Image ${currentImageIndex + 1}`}
+          alt={`${title} - View ${currentImageIndex + 1}`}
           className="main-image"
           onError={(e) => {
             e.target.src = getDefaultImage(category);
@@ -173,6 +173,9 @@ const RentalDetail = () => {
               break;
             case error.TIMEOUT:
               errorMessage = 'Location request timed out. Please refresh the page.';
+              break;
+            default:
+              errorMessage = 'Unable to access location. Please check your browser settings.';
               break;
           }
           

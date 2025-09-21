@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './RentalRequest.css';
 
 const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
@@ -12,7 +11,6 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const navigate = useNavigate();
 
     // Calculate total days and price when dates change
     useEffect(() => {
