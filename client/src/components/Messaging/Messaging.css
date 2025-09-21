@@ -220,7 +220,7 @@
   flex-direction: row-reverse;
   align-self: flex-end !important;
   margin-left: auto !important;
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
   color: white !important;
   justify-content: flex-end;
 }
@@ -324,7 +324,7 @@
 }
 
 .send-button {
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: white;
   border: none;
   padding: 0 20px;
@@ -332,12 +332,12 @@
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(234, 88, 12, 0.3);
+  box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);
 }
 
 .send-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(234, 88, 12, 0.4);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.4);
 }
 
 /* New Conversation */
@@ -514,6 +514,7 @@
   border-radius: 12px;
   padding: 25px;
   border: 1px solid #e1e5e9;
+  pointer-events: auto;
 }
 
 .search-container h3 {
@@ -524,12 +525,14 @@
 
 .search-form {
   margin-bottom: 25px;
+  pointer-events: auto;
 }
 
 .search-input-group {
   display: flex;
   gap: 12px;
   margin-bottom: 15px;
+  pointer-events: auto;
 }
 
 .search-input {
@@ -539,17 +542,20 @@
   border-radius: 8px;
   font-size: 16px;
   transition: border-color 0.2s;
+  background: white;
+  pointer-events: auto;
+  user-select: text;
 }
 
 .search-input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .search-button {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -561,7 +567,7 @@
 
 .search-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 .search-button:disabled {
@@ -607,7 +613,7 @@
 }
 
 .user-result-card:hover {
-  border-color: #3b82f6;
+  border-color: #2563eb;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
@@ -630,7 +636,7 @@
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -666,7 +672,7 @@
 .select-user-btn {
   margin-top: 12px;
   text-align: center;
-  color: #3b82f6;
+  color: #2563eb;
   font-weight: 600;
   font-size: 14px;
 }
@@ -771,8 +777,8 @@
 
 .message-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-actions {
@@ -781,7 +787,7 @@
 }
 
 .send-message-btn {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -795,7 +801,7 @@
 
 .send-message-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
 .send-message-btn:disabled {

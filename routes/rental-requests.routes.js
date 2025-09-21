@@ -43,12 +43,18 @@ router.post('/api/rental-requests', isLoggedIn, async (req, res) => {
 
         // Get listing details and check availability
         const listingQuery = `
-            SELECT l.*, u.name as owner_name, u.email as owner_email 
+            SELECT l.*, 
+                   CASE 
+                       WHEN l.user_type = 'google' THEN gu.name
+                       WHEN l.user_type = 'phone' THEN pu.name
+                   END as owner_name,
+                   CASE 
+                       WHEN l.user_type = 'google' THEN gu.email
+                       WHEN l.user_type = 'phone' THEN pu.phone
+                   END as owner_contact
             FROM listings l
-            LEFT JOIN users u ON (
-                (l.user_type = 'google' AND u.google_id::text = l.user_id::text) OR
-                (l.user_type = 'phone' AND u.phone_id::text = l.user_id::text)
-            )
+            LEFT JOIN users gu ON (l.user_type = 'google' AND gu.id = l.user_id)
+            LEFT JOIN phone_users pu ON (l.user_type = 'phone' AND pu.id = l.user_id)
             WHERE l.id = $1 AND l.is_available = true AND l.rental_status = 'available'
         `;
 
@@ -165,7 +171,7 @@ router.get('/api/rental-requests/listing/:listingId', isLoggedIn, async (req, re
                     ELSE NULL
                 END as renter_profile_picture
             FROM rental_requests rr
-            LEFT JOIN google_users gu ON (rr.renter_user_type = 'google' AND gu.id = rr.renter_user_id)
+            LEFT JOIN users gu ON (rr.renter_user_type = 'google' AND gu.id = rr.renter_user_id)
             LEFT JOIN phone_users pu ON (rr.renter_user_type = 'phone' AND pu.id = rr.renter_user_id)
             WHERE rr.listing_id = $1
             ORDER BY 
@@ -276,7 +282,7 @@ router.get('/api/my-rental-requests', isLoggedIn, async (req, res) => {
                 END as owner_name
             FROM rental_requests rr
             JOIN listings l ON rr.listing_id = l.id
-            LEFT JOIN google_users gu ON (l.user_type = 'google' AND gu.id = l.user_id)
+            LEFT JOIN users gu ON (l.user_type = 'google' AND gu.id = l.user_id)
             LEFT JOIN phone_users pu ON (l.user_type = 'phone' AND pu.id = l.user_id)
             WHERE rr.renter_user_id = $1 AND rr.renter_user_type = $2
             ORDER BY rr.created_at DESC

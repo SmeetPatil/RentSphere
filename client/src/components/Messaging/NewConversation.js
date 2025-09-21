@@ -132,6 +132,8 @@ const NewConversation = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, email, or phone..."
                   className="search-input"
+                  autoComplete="off"
+                  autoFocus
                 />
                 <button type="submit" className="search-button" disabled={loading}>
                   {loading ? (
