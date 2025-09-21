@@ -146,7 +146,7 @@ class GoogleDriveService {
         try {
             // Process image with Sharp (compress and resize)
             const processedImage = await sharp(imageBuffer)
-                .resize(1200, 800, {
+                .resize(800, 600, {
                     fit: 'inside',
                     withoutEnlargement: true
                 })
@@ -187,7 +187,7 @@ class GoogleDriveService {
             // Generate direct image URL for embedding
             // Use GoogleUserContent format (same as profile photos)
             const fileId = response.data.id;
-            const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
+            const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}=w800`;
 
             console.log(`📸 Uploaded image: ${fileName}`);
             console.log(`🔗 Image URL: ${imageUrl}`);
