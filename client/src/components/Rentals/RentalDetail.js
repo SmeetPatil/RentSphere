@@ -228,10 +228,8 @@ const RentalDetail = () => {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
-        const response = await axios.get('/api/profile');
-        if (response.data.success) {
-          setCurrentUser(response.data.user);
-        }
+        const response = await axios.get('/api/user');
+        setCurrentUser(response.data);
       } catch (error) {
         console.error('Error fetching current user:', error);
       }
@@ -496,7 +494,7 @@ const RentalDetail = () => {
                   </button>
                 )}
                 <Link 
-                  to={`/messages/new?user=${listing.user_id}&type=${listing.user_type}`}
+                  to={`/messages/new?user=${listing.user_id}&type=${listing.user_type}&listing=${encodeURIComponent(listing.title)}`}
                   className="contact-btn secondary"
                 >
                   💬 Message Owner

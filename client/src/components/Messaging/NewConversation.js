@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import './Messaging.css';
 
@@ -11,6 +11,41 @@ const NewConversation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Handle URL parameters for pre-selecting user and message
+  useEffect(() => {
+    const userId = searchParams.get('user');
+    const userType = searchParams.get('type');
+    const subject = searchParams.get('subject');
+    const listingTitle = searchParams.get('listing');
+
+    if (userId && userType) {
+      fetchUserDetails(userId, userType);
+    }
+
+    // Set pre-filled message
+    if (subject) {
+      setMessage(subject);
+    } else if (listingTitle) {
+      setMessage(`Hi! I'm interested in renting your listing "${listingTitle}". Could we discuss the details?`);
+    }
+  }, [searchParams]);
+
+  const fetchUserDetails = async (userId, userType) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/api/users/profile?userId=${userId}&userType=${userType}`);
+      if (response.data.success) {
+        setSelectedUser(response.data.user);
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      setError('Failed to load user details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -42,6 +77,7 @@ const NewConversation = () => {
   const handleUserSelect = (user) => {
     setSelectedUser(user);
     setSearchResults([]);
+    setError(null);
   };
 
   const handleStartConversation = async (e) => {
@@ -80,87 +116,124 @@ const NewConversation = () => {
   return (
     <div className="new-conversation">
       <div className="new-conversation-header">
-        <h2>New Message</h2>
+        <h2>💬 New Message</h2>
+        <p>Start a conversation with another user</p>
       </div>
 
       {!selectedUser ? (
-        <div className="user-search">
-          <form onSubmit={handleSearch}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for a user..."
-              className="search-input"
-            />
-            <button type="submit" className="search-button" disabled={loading}>
-              {loading ? 'Searching...' : 'Search'}
-            </button>
-          </form>
+        <div className="user-search-section">
+          <div className="search-container">
+            <h3>🔍 Find User</h3>
+            <form onSubmit={handleSearch} className="search-form">
+              <div className="search-input-group">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name, email, or phone..."
+                  className="search-input"
+                />
+                <button type="submit" className="search-button" disabled={loading}>
+                  {loading ? (
+                    <span>🔄 Searching...</span>
+                  ) : (
+                    <span>🔍 Search</span>
+                  )}
+                </button>
+              </div>
+            </form>
 
-          {error && <div className="error">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
 
-          {searchResults.length > 0 && (
-            <ul className="search-results">
-              {searchResults.map(user => (
-                <li key={`${user.user_type}-${user.id}`} onClick={() => handleUserSelect(user)}>
-                  <div className="user-avatar">
-                    <img 
-                      src={user.profile_picture || 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'} 
-                      alt={user.name} 
-                    />
-                  </div>
-                  <div className="user-details">
-                    <div className="user-name">{user.name}</div>
-                    <div className="user-contact">
-                      {user.user_type === 'google' ? user.email : user.phone}
+            {searchResults.length > 0 && (
+              <div className="search-results-container">
+                <h4>Search Results ({searchResults.length})</h4>
+                <div className="search-results-grid">
+                  {searchResults.map(user => (
+                    <div 
+                      key={`${user.user_type}-${user.id}`} 
+                      className="user-result-card"
+                      onClick={() => handleUserSelect(user)}
+                    >
+                      <div className="user-avatar">
+                        {user.profile_picture ? (
+                          <img src={user.profile_picture} alt={user.name} />
+                        ) : (
+                          <div className="avatar-placeholder">
+                            {user.name.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="user-info">
+                        <h5>{user.name}</h5>
+                        <p className="user-contact">
+                          {user.email || user.phone}
+                        </p>
+                        <span className="user-type-badge">
+                          {user.user_type === 'google' ? '📧 Google' : '📱 Phone'}
+                        </span>
+                      </div>
+                      <div className="select-user-btn">
+                        <span>💬 Message</span>
+                      </div>
                     </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="compose-message">
-          <div className="selected-user">
+        <div className="compose-message-section">
+          <div className="selected-user-card">
             <div className="user-avatar">
-              <img 
-                src={selectedUser.profile_picture || 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'} 
-                alt={selectedUser.name} 
-              />
+              {selectedUser.profile_picture ? (
+                <img src={selectedUser.profile_picture} alt={selectedUser.name} />
+              ) : (
+                <div className="avatar-placeholder">
+                  {selectedUser.name.charAt(0).toUpperCase()}
+                </div>
+              )}
             </div>
             <div className="user-details">
-              <div className="user-name">{selectedUser.name}</div>
-              <div className="user-contact">
+              <h4>{selectedUser.name}</h4>
+              <p className="user-contact">
                 {selectedUser.user_type === 'google' ? selectedUser.email : selectedUser.phone}
-              </div>
+              </p>
+              <span className="user-type-badge">
+                {selectedUser.user_type === 'google' ? '📧 Google User' : '📱 Phone User'}
+              </span>
             </div>
             <button 
               className="change-user-btn" 
               onClick={() => setSelectedUser(null)}
             >
-              Change
+              🔄 Change User
             </button>
           </div>
 
-          <form onSubmit={handleStartConversation}>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message..."
-              className="message-textarea"
-              rows={4}
-            />
-            {error && <div className="error">{error}</div>}
-            <button 
-              type="submit" 
-              className="send-button" 
-              disabled={loading}
-            >
-              {loading ? 'Sending...' : 'Send Message'}
-            </button>
-          </form>
+          <div className="message-compose-container">
+            <h3>✍️ Compose Message</h3>
+            <form onSubmit={handleStartConversation} className="message-form">
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Type your message here..."
+                className="message-textarea"
+                rows={6}
+              />
+              {error && <div className="error-message">{error}</div>}
+              <div className="form-actions">
+                <button 
+                  type="submit" 
+                  className="send-message-btn" 
+                  disabled={loading || !message.trim()}
+                >
+                  {loading ? '📤 Sending...' : '💬 Send Message'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

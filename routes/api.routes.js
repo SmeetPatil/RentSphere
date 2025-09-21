@@ -263,4 +263,60 @@ router.post("/admin/fix-profile-pictures", async (req, res) => {
   }
 });
 
+// Get user profile by ID and type
+router.get("/api/users/profile", async (req, res) => {
+  try {
+    const { userId, userType } = req.query;
+    
+    if (!userId || !userType) {
+      return res.status(400).json({
+        success: false,
+        message: "userId and userType are required"
+      });
+    }
+
+    const pool = require("../database");
+    let user = null;
+
+    if (userType === 'google') {
+      const result = await pool.query(
+        'SELECT id, email as contact, name, profile_picture, created_at, \'google\' as user_type FROM users WHERE id = $1',
+        [userId]
+      );
+      if (result.rows.length > 0) {
+        user = result.rows[0];
+        user.email = user.contact;
+      }
+    } else if (userType === 'phone') {
+      const result = await pool.query(
+        'SELECT id, phone as contact, name, profile_picture, created_at, \'phone\' as user_type FROM phone_users WHERE id = $1',
+        [userId]
+      );
+      if (result.rows.length > 0) {
+        user = result.rows[0];
+        user.phone = user.contact;
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      user: user
+    });
+
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user profile"
+    });
+  }
+});
+
 module.exports = router;
