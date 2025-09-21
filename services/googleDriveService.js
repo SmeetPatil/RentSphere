@@ -249,7 +249,7 @@ class GoogleDriveService {
         try {
             const listingFolderName = `listing_${listingId}`;
 
-            // Find and delete the listing folder and all its contents
+            // Find the listing folder
             const response = await this.drive.files.list({
                 q: `name='${listingFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
                 fields: 'files(id, name)'
@@ -257,12 +257,31 @@ class GoogleDriveService {
 
             if (response.data.files.length > 0) {
                 const folderId = response.data.files[0].id;
-                await this.drive.files.delete({ fileId: folderId });
-                console.log(`🗑️ Deleted listing folder: ${listingFolderName}`);
+                
+                // Find all images in the listing folder
+                const imagesResponse = await this.drive.files.list({
+                    q: `'${folderId}' in parents and trashed=false`,
+                    fields: 'files(id, name)'
+                });
+
+                // Delete each image file
+                const deletePromises = imagesResponse.data.files.map(file => 
+                    this.drive.files.delete({ fileId: file.id })
+                );
+
+                if (deletePromises.length > 0) {
+                    await Promise.all(deletePromises);
+                    console.log(`🗑️ Deleted ${deletePromises.length} old images from listing ${listingId}`);
+                } else {
+                    console.log(`ℹ️ No existing images found for listing ${listingId}`);
+                }
+            } else {
+                console.log(`ℹ️ No folder found for listing ${listingId} (this is normal for new listings)`);
             }
         } catch (error) {
             console.error('❌ Error deleting listing images:', error);
-            throw error;
+            // Don't throw error - we want upload to continue even if delete fails
+            console.log('⚠️ Continuing with upload despite delete error...');
         }
     }
 

@@ -48,7 +48,16 @@ router.post('/api/upload-images/:listingId', isLoggedIn, upload.array('images', 
         console.log(`📸 Uploading ${files.length} images for listing ${listingId} by user ${userName}(${userId})`);
         console.log('Files received:', files.map(f => ({ name: f.originalname, size: f.size, type: f.mimetype })));
 
-        // Upload images using Google Drive cloud storage
+        // First, delete any existing images for this listing to avoid duplication
+        console.log(`🗑️ Cleaning up old images for listing ${listingId}...`);
+        try {
+            await googleDriveService.deleteListingImages(userName, userId, listingId);
+            console.log(`✅ Old images cleaned up for listing ${listingId}`);
+        } catch (deleteError) {
+            console.log(`ℹ️ No old images to delete for listing ${listingId} (this is normal for new listings)`);
+        }
+
+        // Upload new images using Google Drive cloud storage
         const imageUrls = await googleDriveService.uploadListingImages(
             files,
             userName,
