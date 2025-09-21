@@ -8,6 +8,7 @@ const MyListingRequests = () => {
     const [error, setError] = useState('');
     const [actionMessage, setActionMessage] = useState({ type: '', message: '', visible: false });
     const [denialModal, setDenialModal] = useState({ visible: false, requestId: null, denialReason: '' });
+    const [activeTab, setActiveTab] = useState('pending');
 
     useEffect(() => {
         fetchMyListings();
@@ -109,6 +110,36 @@ const MyListingRequests = () => {
         handleRequestAction(denialModal.requestId, 'denied', denialModal.denialReason);
     };
 
+    // Get all requests across all listings
+    const getAllRequests = () => {
+        const allRequests = [];
+        Object.values(listingRequests).forEach(({ listing, requests }) => {
+            requests.forEach(request => {
+                allRequests.push({
+                    ...request,
+                    listing_title: listing.title,
+                    listing_price: listing.price_per_day,
+                    listing_id: listing.id,
+                    listing_images: listing.images || []
+                });
+            });
+        });
+        return allRequests;
+    };
+
+    const filterRequestsByStatus = (status) => {
+        return getAllRequests().filter(request => request.status === status);
+    };
+
+    const getTabCounts = () => {
+        const allRequests = getAllRequests();
+        return {
+            pending: allRequests.filter(r => r.status === 'pending').length,
+            approved: allRequests.filter(r => r.status === 'approved').length,
+            denied: allRequests.filter(r => r.status === 'denied').length
+        };
+    };
+
     const getStatusBadge = (status) => {
         const statusClasses = {
             pending: 'status-pending',
@@ -145,13 +176,129 @@ const MyListingRequests = () => {
         return <div className="error-message">{error}</div>;
     }
 
-    const listingsWithRequests = Object.values(listingRequests).filter(
-        item => item.requests.length > 0
-    );
+    // Helper function to render individual request cards
+    const renderRequestCard = (request, listing) => {
+        return (
+            <div key={request.id} className="request-card">
+                <div className="request-header">
+                    <div className="listing-info">
+                        <h4 className="listing-title">{listing.title}</h4>
+                        <p className="listing-price">${listing.price_per_day}/day</p>
+                    </div>
+                    <div className="renter-info">
+                        {request.renter_profile_picture && (
+                            <img 
+                                src={request.renter_profile_picture} 
+                                alt={request.renter_name}
+                                className="renter-avatar"
+                            />
+                        )}
+                        <div>
+                            <h5>{request.renter_name}</h5>
+                            <p className="renter-contact">{request.renter_contact}</p>
+                        </div>
+                    </div>
+                    {getStatusBadge(request.status)}
+                </div>
 
-    const totalPendingRequests = Object.values(listingRequests).reduce(
-        (total, item) => total + item.requests.filter(req => req.status === 'pending').length, 0
-    );
+                <div className="request-details">
+                    <div className="rental-dates">
+                        <span className="date-range">
+                            {formatDate(request.start_date)} - {formatDate(request.end_date)}
+                        </span>
+                        <span className="duration">
+                            ({calculateDays(request.start_date, request.end_date)} days)
+                        </span>
+                    </div>
+                    
+                    <div className="total-price">
+                        Total: ${request.total_price}
+                    </div>
+                </div>
+
+                {request.message && (
+                    <div className="request-message">
+                        <strong>Message:</strong>
+                        <p>{request.message}</p>
+                    </div>
+                )}
+
+                {request.status === 'denied' && request.denial_reason && (
+                    <div className="denial-reason">
+                        <strong>Denial Reason:</strong>
+                        <p>{request.denial_reason}</p>
+                    </div>
+                )}
+
+                <div className="request-date">
+                    Requested on {formatDate(request.created_at)}
+                </div>
+
+                {request.status === 'pending' && (
+                    <div className="request-actions">
+                        <button
+                            onClick={() => handleRequestAction(request.id, 'approved')}
+                            className="btn btn-approve"
+                        >
+                            Approve
+                        </button>
+                        <button
+                            onClick={() => handleDenyRequest(request.id)}
+                            className="btn btn-deny"
+                        >
+                            Deny
+                        </button>
+                        <Link 
+                            to={`/messages/new?user=${request.renter_user_id}&type=${request.renter_user_type}&subject=Re: Rental Request for ${listing.title}`}
+                            className="btn btn-message"
+                        >
+                            Message Renter
+                        </Link>
+                    </div>
+                )}
+
+                <div className="card-actions">
+                    <Link to={`/rental/${listing.id}`} className="view-listing-link">
+                        View Listing
+                    </Link>
+                </div>
+            </div>
+        );
+    };
+
+    // Helper function to render tab content
+    const renderTabContent = () => {
+        const allRequests = getAllRequests();
+        const filteredRequests = filterRequestsByStatus(allRequests, activeTab);
+
+        if (filteredRequests.length === 0) {
+            const emptyMessages = {
+                pending: "No pending requests at the moment.",
+                approved: "No approved requests yet.",
+                denied: "No denied requests to display."
+            };
+
+            return (
+                <div className="empty-state">
+                    <h3>{emptyMessages[activeTab]}</h3>
+                    <p>
+                        {activeTab === 'pending' 
+                            ? "When users request to rent your items, they'll appear here."
+                            : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} requests will be shown here.`
+                        }
+                    </p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="requests-grid">
+                {filteredRequests.map(({ request, listing }) => 
+                    renderRequestCard(request, listing)
+                )}
+            </div>
+        );
+    };
 
     return (
         <div className="my-listing-requests">
@@ -175,14 +322,9 @@ const MyListingRequests = () => {
             <div className="page-header">
                 <h1>Rental Requests on My Listings</h1>
                 <p>Manage requests from other users who want to rent your items</p>
-                {totalPendingRequests > 0 && (
-                    <div className="pending-badge">
-                        {totalPendingRequests} pending request{totalPendingRequests !== 1 ? 's' : ''}
-                    </div>
-                )}
             </div>
 
-            {listingsWithRequests.length === 0 ? (
+            {getAllRequests().length === 0 ? (
                 <div className="no-requests">
                     <h3>No rental requests yet</h3>
                     <p>When someone requests to rent your items, they'll appear here.</p>
@@ -191,95 +333,30 @@ const MyListingRequests = () => {
                     </Link>
                 </div>
             ) : (
-                <div className="listings-with-requests">
-                    {listingsWithRequests.map(({ listing, requests }) => (
-                        <div key={listing.id} className="listing-requests-card">
-                            <div className="listing-header">
-                                <div className="listing-info">
-                                    <h3>{listing.title}</h3>
-                                    <p className="listing-price">${listing.price_per_day}/day</p>
-                                    <span className="request-count">
-                                        {requests.length} request{requests.length !== 1 ? 's' : ''}
-                                    </span>
-                                </div>
-                                <Link to={`/rental/${listing.id}`} className="view-listing-btn">
-                                    View Listing
-                                </Link>
-                            </div>
-
-                            <div className="requests-list">
-                                {requests.map((request) => (
-                                    <div key={request.id} className="request-item">
-                                        <div className="request-header">
-                                            <div className="renter-info">
-                                                {request.renter_profile_picture && (
-                                                    <img 
-                                                        src={request.renter_profile_picture} 
-                                                        alt={request.renter_name}
-                                                        className="renter-avatar"
-                                                    />
-                                                )}
-                                                <div>
-                                                    <h4>{request.renter_name}</h4>
-                                                    <p className="renter-contact">{request.renter_contact}</p>
-                                                </div>
-                                            </div>
-                                            {getStatusBadge(request.status)}
-                                        </div>
-
-                                        <div className="request-details">
-                                            <div className="rental-dates">
-                                                <span className="date-range">
-                                                    {formatDate(request.start_date)} - {formatDate(request.end_date)}
-                                                </span>
-                                                <span className="duration">
-                                                    ({calculateDays(request.start_date, request.end_date)} days)
-                                                </span>
-                                            </div>
-                                            
-                                            <div className="total-price">
-                                                Total: ${request.total_price}
-                                            </div>
-                                        </div>
-
-                                        {request.message && (
-                                            <div className="request-message">
-                                                <strong>Message:</strong>
-                                                <p>{request.message}</p>
-                                            </div>
-                                        )}
-
-                                        <div className="request-date">
-                                            Requested on {formatDate(request.created_at)}
-                                        </div>
-
-                                        {request.status === 'pending' && (
-                                            <div className="request-actions">
-                                                <button
-                                                    onClick={() => handleRequestAction(request.id, 'approved')}
-                                                    className="btn btn-approve"
-                                                >
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDenyRequest(request.id)}
-                                                    className="btn btn-deny"
-                                                >
-                                                    Deny
-                                                </button>
-                                                <Link 
-                                                    to={`/messages/new?user=${request.renter_user_id}&type=${request.renter_user_type}&subject=Re: Rental Request for ${listing.title}`}
-                                                    className="btn btn-message"
-                                                >
-                                                    Message Renter
-                                                </Link>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
+                <div className="requests-container">
+                    {/* Tab Navigation */}
+                    <div className="tabs-container">
+                        <div className="tabs">
+                            {['pending', 'approved', 'denied'].map(tab => {
+                                const count = getTabCounts()[tab];
+                                return (
+                                    <button
+                                        key={tab}
+                                        className={`tab ${activeTab === tab ? 'active' : ''}`}
+                                        onClick={() => setActiveTab(tab)}
+                                    >
+                                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                        {count > 0 && <span className="tab-count">{count}</span>}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    ))}
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="tab-content">
+                        {renderTabContent()}
+                    </div>
                 </div>
             )}
 
