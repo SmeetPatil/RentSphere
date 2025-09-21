@@ -39,6 +39,59 @@
     font-size: 18px;
 }
 
+/* Tabs Styling */
+.tabs-container {
+    padding: 0 30px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.tabs {
+    display: flex;
+    gap: 0;
+}
+
+.tab {
+    background: none;
+    border: none;
+    padding: 16px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #6c757d;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tab:hover {
+    color: #495057;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.tab-count {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    min-width: 20px;
+    text-align: center;
+}
+
+.tab.active .tab-count {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
 .loading, .error-message {
     display: flex;
     justify-content: center;
@@ -278,6 +331,31 @@
     line-height: 1.5;
 }
 
+/* Denial Reason Styling */
+.denial-reason {
+    margin-bottom: 18px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    border-radius: 12px;
+    border-left: 4px solid #dc3545;
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+}
+
+.denial-label {
+    font-weight: 600;
+    color: #721c24;
+    font-size: 14px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.denial-reason p {
+    margin: 0;
+    color: #721c24;
+    font-style: italic;
+    line-height: 1.5;
+}
+
 .request-meta {
     margin-bottom: 18px;
     padding-bottom: 18px;
@@ -304,6 +382,41 @@
     transition: all 0.3s ease;
     font-size: 14px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pay-now-btn, .view-receipt-btn {
+    flex: 1;
+    padding: 10px 18px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.pay-now-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.pay-now-btn:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.view-receipt-btn {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+}
+
+.view-receipt-btn:hover {
+    background: linear-gradient(135deg, #5a6268, #495057);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }
 
 .view-listing-btn {
@@ -373,4 +486,203 @@
     .request-actions {
         flex-direction: column;
     }
+}
+
+/* Payment Modal Styles */
+.payment-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+.payment-summary {
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    text-align: center;
+}
+
+.payment-summary h4 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.payment-summary p {
+    margin: 0 0 12px 0;
+    color: #666;
+}
+
+.total-amount {
+    font-size: 28px;
+    font-weight: 700;
+    color: #28a745;
+    text-shadow: 0 1px 2px rgba(40, 167, 69, 0.2);
+}
+
+.payment-form {
+    padding: 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-row {
+    display: flex;
+    gap: 12px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.btn-pay {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    flex: 1;
+}
+
+.btn-pay:hover {
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-pay:disabled {
+    background: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Receipt Modal Styles */
+.receipt-modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+}
+
+.receipt-content {
+    padding: 24px;
+}
+
+.receipt-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.success-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.receipt-header h4 {
+    margin: 0 0 8px 0;
+    color: #28a745;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.receipt-header p {
+    margin: 0;
+    color: #666;
+    font-size: 16px;
+}
+
+.receipt-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.receipt-section h5 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 8px;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 4px 0;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-row span:first-child {
+    color: #666;
+    font-size: 14px;
+}
+
+.detail-row span:last-child {
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.total-row {
+    border-top: 2px solid #dee2e6;
+    padding-top: 12px;
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+.total-row span {
+    font-size: 16px;
+}
+
+.total-row span:last-child {
+    color: #28a745;
+    font-weight: 700;
+}
+
+.receipt-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
 }

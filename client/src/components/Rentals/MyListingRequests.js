@@ -7,6 +7,7 @@ const MyListingRequests = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [actionMessage, setActionMessage] = useState({ type: '', message: '', visible: false });
+    const [denialModal, setDenialModal] = useState({ visible: false, requestId: null, denialReason: '' });
 
     useEffect(() => {
         fetchMyListings();
@@ -61,14 +62,19 @@ const MyListingRequests = () => {
         }
     };
 
-    const handleRequestAction = async (requestId, action) => {
+    const handleRequestAction = async (requestId, action, denialReason = null) => {
         try {
+            const requestBody = { status: action };
+            if (action === 'denied' && denialReason) {
+                requestBody.denial_reason = denialReason;
+            }
+
             const response = await fetch(`/api/rental-requests/${requestId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ status: action })
+                body: JSON.stringify(requestBody)
             });
 
             const data = await response.json();
@@ -77,6 +83,11 @@ const MyListingRequests = () => {
                 // Refresh the data to show updated status
                 await fetchMyListings();
                 showActionMessage('success', `Rental request ${action} successfully!`);
+                
+                // Close denial modal if it was open
+                if (denialModal.visible) {
+                    setDenialModal({ visible: false, requestId: null, denialReason: '' });
+                }
             } else {
                 showActionMessage('error', data.message || `Failed to ${action} request`);
             }
@@ -84,6 +95,18 @@ const MyListingRequests = () => {
             console.error(`Error ${action}ing request:`, error);
             showActionMessage('error', `Failed to ${action} request`);
         }
+    };
+
+    const handleDenyRequest = (requestId) => {
+        setDenialModal({ visible: true, requestId, denialReason: '' });
+    };
+
+    const handleDenialSubmit = () => {
+        if (!denialModal.denialReason.trim()) {
+            showActionMessage('error', 'Please provide a reason for denial');
+            return;
+        }
+        handleRequestAction(denialModal.requestId, 'denied', denialModal.denialReason);
     };
 
     const getStatusBadge = (status) => {
@@ -239,7 +262,7 @@ const MyListingRequests = () => {
                                                     Approve
                                                 </button>
                                                 <button
-                                                    onClick={() => handleRequestAction(request.id, 'denied')}
+                                                    onClick={() => handleDenyRequest(request.id)}
                                                     className="btn btn-deny"
                                                 >
                                                     Deny
@@ -257,6 +280,48 @@ const MyListingRequests = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Denial Reason Modal */}
+            {denialModal.visible && (
+                <div className="modal-overlay">
+                    <div className="denial-modal">
+                        <div className="modal-header">
+                            <h3>Deny Rental Request</h3>
+                            <button 
+                                className="modal-close"
+                                onClick={() => setDenialModal({ visible: false, requestId: null, denialReason: '' })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="modal-content">
+                            <p>Please provide a reason for denying this rental request:</p>
+                            <textarea
+                                value={denialModal.denialReason}
+                                onChange={(e) => setDenialModal({...denialModal, denialReason: e.target.value})}
+                                placeholder="Enter reason for denial..."
+                                rows={4}
+                                className="denial-textarea"
+                            />
+                        </div>
+                        <div className="modal-actions">
+                            <button 
+                                className="btn btn-cancel"
+                                onClick={() => setDenialModal({ visible: false, requestId: null, denialReason: '' })}
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                className="btn btn-deny"
+                                onClick={handleDenialSubmit}
+                                disabled={!denialModal.denialReason.trim()}
+                            >
+                                Deny Request
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
