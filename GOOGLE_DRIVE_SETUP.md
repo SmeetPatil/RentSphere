@@ -1,53 +1,43 @@
-# Google Drive API Setup Guide
+# Google Drive OAuth Setup Guide
 
-## 🚀 Step-by-Step Setup
+## ✅ **SETUP COMPLETE**
 
-### 1. Create Google Cloud Project
+This RentSphere deployment uses **OAuth2 authentication** to upload images directly to your personal Google Drive with 2TB storage.
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing one
-3. Name it "RentSphere Drive Integration"
+## 🔧 Current Configuration
 
-### 2. Enable Google Drive API
+### Production Environment Variables (Render)
 
-1. In Google Cloud Console, go to "APIs & Services" > "Library"
-2. Search for "Google Drive API"
-3. Click on it and press "Enable"
+```bash
+GOOGLE_CLIENT_ID=[Already in .env file]
+GOOGLE_CLIENT_SECRET=[Already in .env file]
+GOOGLE_REFRESH_TOKEN=[Your refresh token - already configured]
+```
 
-### 3. Create Service Account
+### Local Development
 
-1. Go to "APIs & Services" > "Credentials"
-2. Click "Create Credentials" > "Service Account"
-3. Name: `rentsphere-drive-service`
-4. Description: `Service account for RentSphere image uploads`
-5. Click "Create and Continue"
-6. Skip role assignment for now, click "Continue"
-7. Click "Done"
+Uses the same OAuth credentials from `.env` file.
 
-### 4. Generate Service Account Key
+## 🚀 How It Works
 
-1. In "Credentials", find your service account
-2. Click on the service account email
-3. Go to "Keys" tab
-4. Click "Add Key" > "Create New Key"
-5. Choose "JSON" format
-6. Download the key file
-7. **IMPORTANT**: Rename it to `google-drive-credentials.json`
-8. Place it in your project root directory
+1. **OAuth2 Authentication**: Uses your personal Google account for authentication
+2. **Cross-Account Setup**:
+   - OAuth app owned by: `smeetpatil878@gmail.com`
+   - Storage account: `thunderblack994@gmail.com` (2TB storage)
+3. **Automatic Folder Creation**: Creates `/rentals` folder in your Google Drive
+4. **Organized Storage**: Images stored as `/rentals/username(id)/listing_id/image1.jpg`
 
-### 5. Share Google Drive Folder
+## 📊 Image Storage Details
 
-1. Open your Google Drive
-2. The app will create a "rentals" folder automatically
-3. Once created, right-click the "rentals" folder
-4. Click "Share"
-5. Add the service account email (from the JSON file)
-6. Give it "Editor" permissions
-7. Click "Send"
+- **Your Drive**: 2TB available
+- **Per Image**: Max 5MB
+- **Per Listing**: Max 5 images (25MB total)
+- **Compression**: Images auto-compressed to 85% quality
+- **Resize**: Auto-resized to max 1200x800px
 
-### 6. Environment Variables
+## 🎉 Ready for Production
 
-Add to your `.env` file:
+**Google Drive integration is complete and ready for deployment! 📸✨**
 
 ```bash
 # Google Drive Configuration

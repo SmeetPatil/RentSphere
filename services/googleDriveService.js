@@ -38,7 +38,7 @@ class GoogleDriveService {
 
             // Create or find the main 'rentals' folder
             await this.ensureRentalsFolder();
-            
+
             console.log('✅ Google Drive service initialized successfully');
         } catch (error) {
             console.error('❌ Failed to initialize Google Drive service:', error);
@@ -67,7 +67,7 @@ class GoogleDriveService {
                     },
                     fields: 'id'
                 });
-                
+
                 this.parentFolderId = folderResponse.data.id;
                 console.log('📁 Created new rentals folder:', this.parentFolderId);
                 console.log('✅ Using your personal Google Drive for image storage');
@@ -81,7 +81,7 @@ class GoogleDriveService {
     async createUserFolder(userName, userId) {
         try {
             const folderName = `${userName}(${userId})`;
-            
+
             // Check if user folder exists
             const response = await this.drive.files.list({
                 q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and parents in '${this.parentFolderId}' and trashed=false`,
@@ -113,7 +113,7 @@ class GoogleDriveService {
     async createListingFolder(userFolderId, listingId) {
         try {
             const folderName = `listing_${listingId}`;
-            
+
             // Check if listing folder exists
             const response = await this.drive.files.list({
                 q: `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and parents in '${userFolderId}' and trashed=false`,
@@ -146,13 +146,13 @@ class GoogleDriveService {
         try {
             // Process image with Sharp (compress and resize)
             const processedImage = await sharp(imageBuffer)
-                .resize(1200, 800, { 
-                    fit: 'inside', 
-                    withoutEnlargement: true 
+                .resize(1200, 800, {
+                    fit: 'inside',
+                    withoutEnlargement: true
                 })
-                .jpeg({ 
+                .jpeg({
                     quality: 85,
-                    progressive: true 
+                    progressive: true
                 })
                 .toBuffer();
 
@@ -186,7 +186,7 @@ class GoogleDriveService {
 
             // Generate direct image URL
             const imageUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
-            
+
             console.log(`📸 Uploaded image: ${fileName}`);
             return {
                 fileId: response.data.id,
@@ -227,7 +227,7 @@ class GoogleDriveService {
             });
 
             const uploadResults = await Promise.all(uploadPromises);
-            
+
             console.log(`✅ Successfully uploaded ${uploadResults.length} images for listing ${listingId}`);
             return uploadResults.map(result => result.imageUrl);
         } catch (error) {
@@ -244,7 +244,7 @@ class GoogleDriveService {
     async deleteListingImages(userName, userId, listingId) {
         try {
             const listingFolderName = `listing_${listingId}`;
-            
+
             // Find and delete the listing folder and all its contents
             const response = await this.drive.files.list({
                 q: `name='${listingFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
@@ -259,6 +259,60 @@ class GoogleDriveService {
         } catch (error) {
             console.error('❌ Error deleting listing images:', error);
             throw error;
+        }
+    }
+
+    async verifyConfiguration() {
+        try {
+            // Check environment variables
+            const requiredEnvVars = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN'];
+            const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+            if (missingVars.length > 0) {
+                return {
+                    success: false,
+                    error: 'Missing environment variables',
+                    missingVars: missingVars,
+                    message: `Please set: ${missingVars.join(', ')}`
+                };
+            }
+
+            // Check service initialization
+            if (!this.drive) {
+                return {
+                    success: false,
+                    error: 'Google Drive service not initialized',
+                    message: 'OAuth client creation failed'
+                };
+            }
+
+            if (!this.parentFolderId) {
+                return {
+                    success: false,
+                    error: 'Rentals folder not found',
+                    message: 'Failed to create or find main rentals folder'
+                };
+            }
+
+            // Test API connectivity
+            await this.drive.files.list({
+                q: "trashed=false",
+                fields: 'files(id, name)',
+                pageSize: 1
+            });
+
+            return {
+                success: true,
+                message: 'Google Drive service is properly configured and connected',
+                parentFolderId: this.parentFolderId
+            };
+        } catch (error) {
+            return {
+                success: false,
+                error: 'API connectivity test failed',
+                message: error.message,
+                details: error.toString()
+            };
         }
     }
 }

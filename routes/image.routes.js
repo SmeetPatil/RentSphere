@@ -1,7 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const { isLoggedIn } = require('../middleware/auth');
-const simpleImageService = require('../services/simpleImageService');
+const googleDriveService = require('../services/googleDriveService');
 const router = express.Router();
 
 // Configure multer for memory storage
@@ -48,8 +48,8 @@ router.post('/api/upload-images/:listingId', isLoggedIn, upload.array('images', 
         console.log(`📸 Uploading ${files.length} images for listing ${listingId} by user ${userName}(${userId})`);
         console.log('Files received:', files.map(f => ({ name: f.originalname, size: f.size, type: f.mimetype })));
 
-        // Upload images using simple file system storage
-        const imageUrls = await simpleImageService.uploadListingImages(
+        // Upload images using Google Drive cloud storage
+        const imageUrls = await googleDriveService.uploadListingImages(
             files,
             userName,
             userId,
@@ -175,8 +175,8 @@ router.delete('/api/delete-images/:listingId', isLoggedIn, async (req, res) => {
             });
         }
 
-        // Delete images from file system
-        await simpleImageService.deleteListingImages(userName, userId, listingId);
+        // Delete images from Google Drive
+        await googleDriveService.deleteListingImages(userName, userId, listingId);
 
         // Clear images from database
         const updateQuery = `

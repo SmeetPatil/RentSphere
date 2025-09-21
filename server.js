@@ -62,6 +62,7 @@ app.get("/debug-env", (req, res) => {
     NODE_ENV: process.env.NODE_ENV,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID ? "SET" : "NOT SET",
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET ? "SET" : "NOT SET",
+    GOOGLE_REFRESH_TOKEN: process.env.GOOGLE_REFRESH_TOKEN ? "SET" : "NOT SET",
     callbackURL:
       process.env.NODE_ENV === "production"
         ? "https://rentsphere-hzo2.onrender.com/google/callback"
@@ -189,11 +190,35 @@ app.get("/debug-google-drive", async (req, res) => {
   try {
     const googleDriveService = require("./services/googleDriveService");
     
+    // Check environment variables first
+    const envCheck = {
+      GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
+      GOOGLE_REFRESH_TOKEN: !!process.env.GOOGLE_REFRESH_TOKEN
+    };
+    
+    const allEnvVarsSet = Object.values(envCheck).every(Boolean);
+    
+    if (!allEnvVarsSet) {
+      return res.json({
+        success: false,
+        message: "Google Drive configuration incomplete",
+        environmentVariables: envCheck,
+        missingVars: Object.keys(envCheck).filter(key => !envCheck[key]),
+        recommendations: [
+          "Set missing environment variables in your deployment platform",
+          "Ensure GOOGLE_REFRESH_TOKEN is obtained through OAuth flow",
+          "Verify credentials are valid and not expired"
+        ]
+      });
+    }
+    
     // Force re-initialization to see current status
     await googleDriveService.initializeDrive();
     
-    // List files in service account's drive
+    // Test basic connectivity
     let driveContents = [];
+    let connectionError = null;
     try {
       const filesResponse = await googleDriveService.drive.files.list({
         q: "trashed=false",
@@ -203,19 +228,22 @@ app.get("/debug-google-drive", async (req, res) => {
       driveContents = filesResponse.data.files;
     } catch (listError) {
       console.error('Error listing drive contents:', listError);
+      connectionError = listError.message;
     }
     
     res.json({
-      success: true,
-      message: "Google Drive debug info",
+      success: !!googleDriveService.drive && !!googleDriveService.parentFolderId,
+      message: "Google Drive configuration status",
+      environmentVariables: envCheck,
       parentFolderId: googleDriveService.parentFolderId,
       driveInitialized: !!googleDriveService.drive,
+      connectionError: connectionError,
       driveContents: driveContents,
       status: {
-        setup: "Service account is using its own Google Drive space",
-        visibility: "You won't see these folders in your personal Drive",
-        functionality: "Images will work perfectly and be publicly accessible",
-        storage: "Uses your 2TB Google Drive quota through the service account"
+        setup: "OAuth-based Google Drive integration",
+        visibility: "Images stored in Google Drive cloud storage",
+        functionality: connectionError ? "Connection failed - check credentials" : "Ready for image uploads",
+        storage: "Uses Google Drive API with OAuth authentication"
       }
     });
   } catch (error) {
@@ -223,6 +251,34 @@ app.get("/debug-google-drive", async (req, res) => {
       success: false,
       error: error.message,
       details: error.toString()
+    });
+  }
+});
+
+// Test Google Drive configuration
+app.get("/test-google-drive", async (req, res) => {
+  try {
+    const googleDriveService = require("./services/googleDriveService");
+    const result = await googleDriveService.verifyConfiguration();
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: "Google Drive is ready for image uploads",
+        configuration: result
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Google Drive configuration issues detected",
+        error: result
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to test Google Drive configuration",
+      error: error.message
     });
   }
 });
