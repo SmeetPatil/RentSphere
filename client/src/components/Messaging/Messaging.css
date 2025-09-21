@@ -545,6 +545,8 @@
   background: white;
   pointer-events: auto;
   user-select: text;
+  min-width: 0;
+  width: 100%;
 }
 
 .search-input:focus {
@@ -562,7 +564,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 120px;
+  min-width: 100px;
+  max-width: 120px;
+  flex-shrink: 0;
 }
 
 .search-button:hover:not(:disabled) {

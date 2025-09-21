@@ -42,4 +42,54 @@ router.get("/logout", (req, res) => {
   });
 });
 
+// Rental request pages (served by React)
+router.get("/my-rental-requests", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/my-listing-requests", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+// Other React routes
+router.get("/dashboard", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/profile", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/rentals", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/rentals/:id", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/create-listing", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/my-listings", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/messages", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/messages/:id", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
+router.get("/new-message", isLoggedIn, (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "client", "build", "index.html"));
+});
+
 module.exports = router;

@@ -11,6 +11,7 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+    const [successData, setSuccessData] = useState(null);
 
     // Calculate total days and price when dates change
     useEffect(() => {
@@ -77,9 +78,16 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
             const data = await response.json();
 
             if (data.success) {
+                setSuccessData({
+                    requestId: data.rentalRequest.id,
+                    startDate: formData.startDate,
+                    endDate: formData.endDate,
+                    totalDays: totalDays,
+                    totalPrice: totalPrice,
+                    listingTitle: listing.title
+                });
                 onSuccess && onSuccess(data.rentalRequest);
-                alert('Rental request submitted successfully! The owner will review your request.');
-                onClose();
+                // Don't close immediately, let user see the success message
             } else {
                 throw new Error(data.message || 'Failed to submit rental request');
             }
@@ -110,17 +118,66 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
         <div className="rental-request-overlay">
             <div className="rental-request-modal">
                 <div className="modal-header">
-                    <h2>Request to Rent</h2>
+                    <h2>{successData ? 'Request Submitted!' : 'Request to Rent'}</h2>
                     <button className="close-button" onClick={onClose}>×</button>
                 </div>
 
-                <div className="listing-summary">
-                    <h3>{listing.title}</h3>
-                    <p className="price">${listing.price_per_day}/day</p>
-                    <p className="category">{listing.category}</p>
-                </div>
+                {successData ? (
+                    // Success State
+                    <div className="success-content">
+                        <div className="success-icon">
+                            <div className="checkmark">✓</div>
+                        </div>
+                        
+                        <h3>Rental Request Submitted Successfully!</h3>
+                        <p className="success-message">
+                            Your request to rent <strong>{successData.listingTitle}</strong> has been sent to the owner.
+                        </p>
 
-                <form onSubmit={handleSubmit} className="rental-request-form">
+                        <div className="request-summary">
+                            <h4>Request Details:</h4>
+                            <div className="detail-row">
+                                <span>Rental Period:</span>
+                                <span>{new Date(successData.startDate).toLocaleDateString()} - {new Date(successData.endDate).toLocaleDateString()}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span>Duration:</span>
+                                <span>{successData.totalDays} day{successData.totalDays !== 1 ? 's' : ''}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span>Total Cost:</span>
+                                <span className="price-highlight">${successData.totalPrice}</span>
+                            </div>
+                        </div>
+
+                        <div className="next-steps">
+                            <h4>What's Next?</h4>
+                            <ul>
+                                <li>The owner will review your request</li>
+                                <li>You'll receive a notification when they respond</li>
+                                <li>Check your rental requests in the dashboard</li>
+                            </ul>
+                        </div>
+
+                        <div className="success-actions">
+                            <button onClick={onClose} className="close-success-button">
+                                Continue Browsing
+                            </button>
+                            <a href="/my-rental-requests" className="view-requests-button">
+                                View My Requests
+                            </a>
+                        </div>
+                    </div>
+                ) : (
+                    // Normal Form State
+                    <>
+                        <div className="listing-summary">
+                            <h3>{listing.title}</h3>
+                            <p className="price">${listing.price_per_day}/day</p>
+                            <p className="category">{listing.category}</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="rental-request-form">
                     <div className="date-section">
                         <div className="date-field">
                             <label htmlFor="startDate">Start Date</label>
@@ -189,6 +246,8 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
                         </button>
                     </div>
                 </form>
+                </>
+                )}
             </div>
         </div>
     );

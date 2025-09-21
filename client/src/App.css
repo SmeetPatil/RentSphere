@@ -587,7 +587,31 @@ body {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #111827 0%, #374151 100%);
+  background: linear-gradient(90deg, #059669 0%, #047857 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.action-card:nth-child(5)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #7c3aed 0%, #5b21b6 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.action-card:nth-child(6)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #0891b2 0%, #0e7490 100%);
   transform: scaleX(0);
   transition: transform 0.3s ease;
 }
@@ -631,7 +655,25 @@ body {
 .action-card:nth-child(4) .action-icon {
   font-size: 3.5rem;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+}
+
+.action-card:nth-child(5) .action-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: block;
+}
+
+.action-card:nth-child(6) .action-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
@@ -693,10 +735,28 @@ body {
 }
 
 .action-card:nth-child(4) .action-btn.active {
-  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
   color: white;
   cursor: pointer;
-  box-shadow: 0 8px 25px rgba(17, 24, 39, 0.3);
+  box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card:nth-child(5) .action-btn.active {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.action-card:nth-child(6) .action-btn.active {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 8px 25px rgba(8, 145, 178, 0.3);
   position: relative;
   overflow: hidden;
 }
