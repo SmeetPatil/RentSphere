@@ -184,10 +184,20 @@ class GoogleDriveService {
                 }
             });
 
-            // Generate direct image URL
-            const imageUrl = `https://drive.google.com/uc?export=view&id=${response.data.id}`;
+            // Generate direct image URL for embedding
+            // Multiple URL formats for better compatibility
+            const fileId = response.data.id;
+            
+            // Try this format first - works best for embedding
+            const imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+            
+            // Alternative formats (for debugging):
+            // const imageUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+            // const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
 
             console.log(`📸 Uploaded image: ${fileName}`);
+            console.log(`🔗 Image URL: ${imageUrl}`);
+            console.log(`📁 File ID: ${response.data.id}`);
             return {
                 fileId: response.data.id,
                 imageUrl: imageUrl,
