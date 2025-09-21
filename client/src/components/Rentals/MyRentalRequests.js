@@ -44,6 +44,7 @@ const MyRentalRequests = () => {
         const statusConfig = {
             pending: { class: 'status-pending', text: 'Pending Review' },
             approved: { class: 'status-approved', text: 'Approved' },
+            paid: { class: 'status-paid', text: 'Paid' },
             denied: { class: 'status-denied', text: 'Denied' }
         };
 
@@ -87,6 +88,7 @@ const MyRentalRequests = () => {
         return {
             pending: filterRequestsByStatus('pending').length,
             approved: filterRequestsByStatus('approved').length,
+            paid: filterRequestsByStatus('paid').length,
             denied: filterRequestsByStatus('denied').length
         };
     };
@@ -98,13 +100,14 @@ const MyRentalRequests = () => {
             const emptyMessages = {
                 pending: "No pending requests. Your requests will appear here while waiting for approval.",
                 approved: "No approved requests yet. Approved requests will show here with payment options.",
+                paid: "No paid requests yet. Completed payments will be shown here with receipts.",
                 denied: "No denied requests. Requests that were declined will appear here with reasons."
             };
             
             return (
                 <div className="empty-state">
                     <div className="empty-icon">
-                        {activeTab === 'pending' ? '⏳' : activeTab === 'approved' ? '✅' : '❌'}
+                        {activeTab === 'pending' ? '⏳' : activeTab === 'approved' ? '✅' : activeTab === 'paid' ? '💳' : '❌'}
                     </div>
                     <h3>No {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Requests</h3>
                     <p>{emptyMessages[activeTab]}</p>
@@ -253,13 +256,20 @@ const MyRentalRequests = () => {
                 const data = await response.json();
                 
                 if (data.success) {
+                    // Update the request status to 'paid' in the local state
+                    setRequests(prev => prev.map(req => 
+                        req.id === paymentModal.request.id 
+                            ? { ...req, status: 'paid', payment_status: 'completed' }
+                            : req
+                    ));
+                    
                     // Close payment modal and refresh data
                     setPaymentModal({ visible: false, request: null });
-                    await fetchMyRequests();
                     
                     // Show receipt
                     const updatedRequest = { 
                         ...paymentModal.request, 
+                        status: 'paid',
                         payment_status: 'completed',
                         transaction_id: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                         payment_date: new Date().toISOString()
@@ -271,11 +281,19 @@ const MyRentalRequests = () => {
                 }
             } else {
                 // For demo purposes, simulate successful payment even if API doesn't exist
+                // Update the request status to 'paid' in the local state
+                setRequests(prev => prev.map(req => 
+                    req.id === paymentModal.request.id 
+                        ? { ...req, status: 'paid', payment_status: 'completed' }
+                        : req
+                ));
+                
                 setPaymentModal({ visible: false, request: null });
                 
                 // Show receipt with demo data
                 const updatedRequest = { 
                     ...paymentModal.request, 
+                    status: 'paid',
                     payment_status: 'completed',
                     transaction_id: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     payment_date: new Date().toISOString()
@@ -332,13 +350,18 @@ const MyRentalRequests = () => {
                 )}
 
                 <div className="page-header">
+                    <div className="header-navigation">
+                        <Link to="/dashboard" className="back-to-dashboard">
+                            ← Back to Dashboard
+                        </Link>
+                    </div>
                     <h1>My Rental Requests</h1>
                     <p>Track the status of your rental requests</p>
                 </div>
 
                 <div className="tabs-container">
                     <div className="tabs">
-                        {['pending', 'approved', 'denied'].map(tab => (
+                        {['pending', 'approved', 'paid', 'denied'].map(tab => (
                             <button
                                 key={tab}
                                 className={`tab ${activeTab === tab ? 'active' : ''}`}

@@ -29,7 +29,7 @@ passport.deserializeUser(async function (sessionData, done) {
       user = result.rows[0];
     }
 
-    console.log("Deserialized user:", user); // Debug log
+    console.log("Deserialized user: {", user.id,user.name,"}"); // Debug log
     done(null, user);
   } catch (error) {
     console.error("Deserialization error:", error);

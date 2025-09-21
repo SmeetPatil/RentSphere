@@ -81,6 +81,49 @@
     text-align: center;
     margin-bottom: 30px;
     position: relative;
+    padding: 30px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.header-navigation {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+}
+
+.back-to-dashboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.back-to-dashboard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .header-navigation {
+        position: static;
+        text-align: left;
+        margin-bottom: 20px;
+    }
+    
+    .page-header {
+        padding: 20px;
+    }
 }
 
 .page-header h1 {
@@ -645,6 +688,13 @@
     color: #155724;
     border: 1px solid #c3e6cb;
     box-shadow: 0 2px 4px rgba(195, 230, 203, 0.4);
+}
+
+.status-paid {
+    background: linear-gradient(135deg, #b3e5fc, #81d4fa);
+    color: #0277bd;
+    border: 1px solid #81d4fa;
+    box-shadow: 0 2px 4px rgba(129, 212, 250, 0.4);
 }
 
 .status-denied {

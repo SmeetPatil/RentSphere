@@ -136,6 +136,7 @@ const MyListingRequests = () => {
         return {
             pending: allRequests.filter(r => r.status === 'pending').length,
             approved: allRequests.filter(r => r.status === 'approved').length,
+            paid: allRequests.filter(r => r.status === 'paid').length,
             denied: allRequests.filter(r => r.status === 'denied').length
         };
     };
@@ -144,6 +145,7 @@ const MyListingRequests = () => {
         const statusClasses = {
             pending: 'status-pending',
             approved: 'status-approved',
+            paid: 'status-paid',
             denied: 'status-denied'
         };
 
@@ -268,13 +270,13 @@ const MyListingRequests = () => {
 
     // Helper function to render tab content
     const renderTabContent = () => {
-        const allRequests = getAllRequests();
-        const filteredRequests = filterRequestsByStatus(allRequests, activeTab);
+        const filteredRequests = filterRequestsByStatus(activeTab);
 
         if (filteredRequests.length === 0) {
             const emptyMessages = {
                 pending: "No pending requests at the moment.",
                 approved: "No approved requests yet.",
+                paid: "No paid requests to display.",
                 denied: "No denied requests to display."
             };
 
@@ -284,6 +286,8 @@ const MyListingRequests = () => {
                     <p>
                         {activeTab === 'pending' 
                             ? "When users request to rent your items, they'll appear here."
+                            : activeTab === 'paid'
+                            ? "Requests with completed payments will be shown here."
                             : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} requests will be shown here.`
                         }
                     </p>
@@ -293,9 +297,14 @@ const MyListingRequests = () => {
 
         return (
             <div className="requests-grid">
-                {filteredRequests.map(({ request, listing }) => 
-                    renderRequestCard(request, listing)
-                )}
+                {filteredRequests.map((request) => {
+                    // Find the corresponding listing
+                    const listing = Object.values(listingRequests).find(
+                        ({ listing }) => listing.id === request.listing_id
+                    )?.listing;
+                    
+                    return renderRequestCard(request, listing);
+                })}
             </div>
         );
     };
@@ -320,6 +329,11 @@ const MyListingRequests = () => {
             )}
             
             <div className="page-header">
+                <div className="header-navigation">
+                    <Link to="/dashboard" className="back-to-dashboard">
+                        ← Back to Dashboard
+                    </Link>
+                </div>
                 <h1>Rental Requests on My Listings</h1>
                 <p>Manage requests from other users who want to rent your items</p>
             </div>
@@ -337,7 +351,7 @@ const MyListingRequests = () => {
                     {/* Tab Navigation */}
                     <div className="tabs-container">
                         <div className="tabs">
-                            {['pending', 'approved', 'denied'].map(tab => {
+                            {['pending', 'approved', 'paid', 'denied'].map(tab => {
                                 const count = getTabCounts()[tab];
                                 return (
                                     <button
