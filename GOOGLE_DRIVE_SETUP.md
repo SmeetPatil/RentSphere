@@ -1,4 +1,4 @@
-# Google Drive OAuth Setup Guide
+# Google Drive OAuth Setup Guide (Follow strictly)
 
 ## ✅ **SETUP COMPLETE**
 
@@ -11,7 +11,7 @@ This RentSphere deployment uses **OAuth2 authentication** to upload images direc
 ```bash
 GOOGLE_CLIENT_ID=[Already in .env file]
 GOOGLE_CLIENT_SECRET=[Already in .env file]
-GOOGLE_REFRESH_TOKEN=[Your refresh token - already configured]
+GOOGLE_REFRESH_TOKEN=[Your refresh token - already configured] 
 ```
 
 ### Local Development

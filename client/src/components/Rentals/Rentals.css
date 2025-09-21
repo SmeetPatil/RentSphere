@@ -959,6 +959,8 @@
 .contact-btn.primary {
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: white;
+  border: none;
+  cursor: pointer;
 }
 
 .contact-btn.primary:hover {
@@ -966,6 +968,26 @@
   box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
   text-decoration: none;
   color: white;
+}
+
+.contact-btn.secondary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-btn.secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+  text-decoration: none;
+  color: white;
+}
+
+.rent-now-btn {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .contact-info {

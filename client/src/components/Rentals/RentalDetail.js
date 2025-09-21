@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import MapComponent from './MapComponent';
+import RentalRequestForm from './RentalRequestForm';
 import './Rentals.css';
 
 // Image Gallery Component
@@ -145,6 +146,8 @@ const RentalDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const [showRentalForm, setShowRentalForm] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Get user location
   useEffect(() => {
@@ -217,6 +220,39 @@ const RentalDetail = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation, id]);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get('/api/profile');
+        if (response.data.success) {
+          setCurrentUser(response.data.user);
+        }
+      } catch (error) {
+        console.error('Error fetching current user:', error);
+      }
+    };
+
+    fetchCurrentUser();
+  }, []);
+
+  const handleRentNow = () => {
+    if (!currentUser) {
+      alert('Please log in to rent this item');
+      return;
+    }
+    setShowRentalForm(true);
+  };
+
+  const handleRentalSuccess = (rentalRequest) => {
+    console.log('Rental request submitted:', rentalRequest);
+    setShowRentalForm(false);
+  };
+
+  const isOwnListing = currentUser && listing && 
+    currentUser.id === listing.user_id && 
+    (currentUser.google_id ? 'google' : 'phone') === listing.user_type;
 
   const formatPrice = (price) => {
     return `₹${parseFloat(price).toFixed(0)}`;
@@ -447,14 +483,27 @@ const RentalDetail = () => {
               </div>
 
               <div className="contact-actions">
+                {!isOwnListing && (
+                  <button 
+                    onClick={handleRentNow}
+                    className="contact-btn primary rent-now-btn"
+                    style={{ marginBottom: '12px' }}
+                  >
+                    🚀 Rent Now
+                  </button>
+                )}
                 <Link 
                   to={`/messages/new?user=${listing.user_id}&type=${listing.user_type}`}
-                  className="contact-btn primary"
+                  className="contact-btn secondary"
                 >
                   💬 Message Owner
                 </Link>
                 <div className="contact-info">
-                  <small>Contact the owner to discuss rental details and availability</small>
+                  <small>
+                    {!isOwnListing 
+                      ? "Rent instantly or contact the owner to discuss rental details" 
+                      : "This is your listing"}
+                  </small>
                 </div>
               </div>
             </div>
@@ -486,6 +535,15 @@ const RentalDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Rental Request Form Modal */}
+      {showRentalForm && listing && (
+        <RentalRequestForm
+          listing={listing}
+          onClose={() => setShowRentalForm(false)}
+          onSuccess={handleRentalSuccess}
+        />
+      )}
     </div>
   );
 };

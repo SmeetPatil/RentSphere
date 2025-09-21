@@ -1,0 +1,348 @@
+/* My Rental Requests Page Styles */
+.rental-requests-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+    padding: 20px;
+}
+
+.requests-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-height: 600px;
+}
+
+.page-header {
+    padding: 30px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.page-header p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+.loading, .error-message {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    font-size: 1.2rem;
+    color: #6b7280;
+}
+
+.error-message {
+    color: #dc2626;
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    margin: 20px;
+    padding: 20px;
+    height: auto;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+}
+
+.empty-state h3 {
+    margin: 0 0 12px 0;
+    color: #374151;
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    margin: 0 0 24px 0;
+    color: #6b7280;
+    font-size: 1.1rem;
+}
+
+.browse-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.browse-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.requests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 24px;
+    padding: 30px;
+}
+
+.request-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.request-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+}
+
+.request-image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.request-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.status-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-pending {
+    background: #fbbf24;
+    color: #92400e;
+}
+
+.status-approved {
+    background: #34d399;
+    color: #065f46;
+}
+
+.status-denied {
+    background: #fca5a5;
+    color: #991b1b;
+}
+
+.request-content {
+    padding: 20px;
+}
+
+.request-title {
+    margin: 0 0 8px 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.request-owner {
+    margin: 0 0 16px 0;
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.request-dates {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid #3b82f6;
+}
+
+.date-range {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.date-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.dates {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.duration {
+    text-align: right;
+}
+
+.days {
+    color: #3b82f6;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.request-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f0f9ff;
+    border-radius: 8px;
+    border: 1px solid #bae6fd;
+}
+
+.price-breakdown {
+    color: #0c4a6e;
+    font-size: 0.875rem;
+}
+
+.total-price {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0c4a6e;
+}
+
+.request-message {
+    margin-bottom: 16px;
+    padding: 12px;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    border-left: 4px solid #6b7280;
+}
+
+.message-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.request-message p {
+    margin: 0;
+    color: #4b5563;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.request-meta {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.request-date {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+.request-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.view-listing-btn, .contact-owner-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.view-listing-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.view-listing-btn:hover {
+    background: #e5e7eb;
+    color: #1f2937;
+    text-decoration: none;
+}
+
+.contact-owner-btn {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+    border: none;
+}
+
+.contact-owner-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .rental-requests-page {
+        padding: 10px;
+    }
+
+    .page-header {
+        padding: 20px;
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .requests-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 20px;
+    }
+
+    .request-dates, .request-price {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .date-range {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .duration {
+        text-align: left;
+    }
+
+    .request-actions {
+        flex-direction: column;
+    }
+}

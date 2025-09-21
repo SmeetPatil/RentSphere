@@ -16,6 +16,8 @@ import CreateListing from './components/Rentals/CreateListing';
 import MyListings from './components/Rentals/MyListings';
 import RentalDetail from './components/Rentals/RentalDetail';
 import EditListing from './components/Rentals/EditListing';
+import MyRentalRequests from './components/Rentals/MyRentalRequests';
+import MyListingRequests from './components/Rentals/MyListingRequests';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -123,6 +125,10 @@ function App() {
           <Route path="/create-listing" element={user ? <CreateListing /> : <Navigate to="/login" />} />
           <Route path="/edit-listing/:id" element={user ? <EditListing /> : <Navigate to="/login" />} />
           <Route path="/my-listings" element={user ? <MyListings /> : <Navigate to="/login" />} />
+
+          {/* Rental request routes */}
+          <Route path="/my-rental-requests" element={user ? <MyRentalRequests /> : <Navigate to="/login" />} />
+          <Route path="/my-listing-requests" element={user ? <MyListingRequests /> : <Navigate to="/login" />} />
         </Routes>
       </div>
     </Router>
@@ -702,6 +708,22 @@ function Dashboard({ user }) {
               <p>Manage your rental listings</p>
               <a href="/my-listings" className="action-btn active">
                 View Listings
+              </a>
+            </div>
+            <div className="action-card">
+              <div className="action-icon">📝</div>
+              <h4>My Requests</h4>
+              <p>View rental requests you've sent</p>
+              <a href="/my-rental-requests" className="action-btn active">
+                View Requests
+              </a>
+            </div>
+            <div className="action-card">
+              <div className="action-icon">📥</div>
+              <h4>Incoming Requests</h4>
+              <p>Manage requests on your listings</p>
+              <a href="/my-listing-requests" className="action-btn active">
+                Manage Requests
               </a>
             </div>
           </div>

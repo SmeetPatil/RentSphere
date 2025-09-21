@@ -12,6 +12,7 @@ const authRoutes = require("./routes/auth.routes");
 const messagingRoutes = require("./routes/messaging.routes");
 const rentalRoutes = require("./routes/rental.routes");
 const imageRoutes = require("./routes/image.routes");
+const rentalRequestsRoutes = require("./routes/rental-requests.routes");
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use("/", authRoutes); // Authentication routes
 app.use("/", messagingRoutes); // Messaging routes
 app.use("/", rentalRoutes); // Rental routes
 app.use("/", imageRoutes); // Image upload routes
+app.use("/", rentalRequestsRoutes); // Rental requests routes
 
 // Debug endpoint to check environment
 app.get("/debug-env", (req, res) => {
@@ -176,6 +178,42 @@ app.get("/setup-rental-tables", async (req, res) => {
     });
   } catch (error) {
     console.error("Rental tables setup error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message || "Unknown database error",
+      details: error.toString(),
+      stack: error.stack,
+    });
+  }
+});
+
+// Setup rental requests tables endpoint
+app.get("/setup-rental-requests", async (req, res) => {
+  try {
+    const pool = require("./database");
+    const fs = require("fs");
+    const path = require("path");
+
+    // Read and execute the rental requests schema
+    const schemaPath = path.join(__dirname, "setup", "rental-requests-schema.sql");
+    const schema = fs.readFileSync(schemaPath, "utf8");
+
+    // Split by semicolon and execute each statement
+    const statements = schema.split(";").filter(stmt => stmt.trim());
+    
+    for (const statement of statements) {
+      if (statement.trim()) {
+        await pool.query(statement);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: "Rental requests schema deployed successfully!",
+      details: `Executed ${statements.length} SQL statements`
+    });
+  } catch (error) {
+    console.error("Rental requests setup error:", error);
     res.status(500).json({
       success: false,
       error: error.message || "Unknown database error",
