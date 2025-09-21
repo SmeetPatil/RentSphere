@@ -94,6 +94,7 @@ body {
   font-weight: 900;
   background: linear-gradient(135deg, #dc2626 0%, #1e3a8a 50%, #ea580c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 0.8rem;
   text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -112,6 +113,7 @@ body {
   margin-bottom: 1.2rem;
   background: linear-gradient(135deg, #dc2626 0%, #1e3a8a 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -198,6 +200,7 @@ body {
   font-weight: 700;
   background: linear-gradient(135deg, #dc2626 0%, #1e3a8a 50%, #ea580c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   text-align: center;
 }
@@ -231,6 +234,7 @@ body {
   left: 0;
   background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: bold;
   font-size: 1.2rem;
@@ -295,6 +299,7 @@ body {
   font-weight: 900;
   background: linear-gradient(135deg, #dc2626 0%, #1e3a8a 50%, #ea580c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
 }
@@ -522,6 +527,7 @@ body {
   text-align: center;
   background: linear-gradient(135deg, #dc2626 0%, #1e3a8a 50%, #ea580c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -630,6 +636,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -639,6 +646,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -648,6 +656,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -657,6 +666,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -666,6 +676,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -675,6 +686,7 @@ body {
   margin-bottom: 1.5rem;
   background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   display: block;
 }
@@ -793,6 +805,7 @@ body {
   text-align: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -890,6 +903,7 @@ body {
   text-align: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -947,6 +961,7 @@ body {
 .activity-content strong {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 700;
 }

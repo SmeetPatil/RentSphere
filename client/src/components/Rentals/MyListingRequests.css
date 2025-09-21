@@ -5,6 +5,78 @@
     padding: 20px;
 }
 
+/* Action Message Styles */
+.action-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    max-width: 400px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideInRight 0.3s ease-out;
+}
+
+.action-message.success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.action-message.error {
+    background: linear-gradient(135deg, #f44336, #da190b);
+    color: white;
+}
+
+.message-content {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    gap: 12px;
+}
+
+.message-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.message-text {
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.close-message {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-message:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 .page-header {
     text-align: center;
     margin-bottom: 30px;
@@ -14,59 +86,87 @@
 .page-header h1 {
     color: #333;
     margin-bottom: 10px;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .page-header p {
     color: #666;
-    font-size: 16px;
+    font-size: 18px;
+    margin-bottom: 20px;
 }
 
 .pending-badge {
-    background: #ff6b6b;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
     color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: bold;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 15px;
+    font-weight: 600;
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 15px;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); }
+    50% { box-shadow: 0 4px 25px rgba(255, 107, 107, 0.5); }
+    100% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); }
 }
 
 .no-requests {
     text-align: center;
-    padding: 60px 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 16px;
     margin-top: 20px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
 }
 
 .no-requests h3 {
-    color: #666;
+    color: #495057;
     margin-bottom: 15px;
+    font-size: 24px;
+    font-weight: 600;
 }
 
 .no-requests p {
-    color: #888;
-    margin-bottom: 25px;
+    color: #6c757d;
+    margin-bottom: 30px;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
 .listings-with-requests {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 25px;
 }
 
 .listing-requests-card {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    border: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+}
+
+.listing-requests-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .listing-header {
-    background: #f8f9fa;
-    padding: 20px;
-    border-bottom: 1px solid #eee;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 24px;
+    border-bottom: 1px solid #dee2e6;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -75,38 +175,45 @@
 .listing-info h3 {
     margin: 0 0 8px 0;
     color: #333;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: 600;
 }
 
 .listing-price {
     color: #28a745;
-    font-weight: bold;
+    font-weight: 700;
     margin: 0 0 8px 0;
+    font-size: 18px;
 }
 
 .request-count {
-    background: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    padding: 4px 12px;
-    border-radius: 15px;
-    font-size: 12px;
-    font-weight: bold;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .view-listing-btn {
-    background: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
     text-decoration: none;
     font-size: 14px;
-    transition: background-color 0.2s;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
 }
 
 .view-listing-btn:hover {
-    background: #0056b3;
+    background: linear-gradient(135deg, #0056b3, #003d82);
     color: white;
     text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
 }
 
 .requests-list {
@@ -114,9 +221,9 @@
 }
 
 .request-item {
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    transition: background-color 0.2s;
+    padding: 24px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
 }
 
 .request-item:last-child {
@@ -124,7 +231,7 @@
 }
 
 .request-item:hover {
-    background: #f8f9fa;
+    background: linear-gradient(135deg, #f8f9fa 0%, #f1f3f4 100%);
 }
 
 .request-header {
@@ -141,10 +248,12 @@
 }
 
 .renter-avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     object-fit: cover;
+    border: 3px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .renter-info h4 {
@@ -160,39 +269,44 @@
 }
 
 .status-badge {
-    padding: 6px 12px;
-    border-radius: 15px;
+    padding: 8px 16px;
+    border-radius: 20px;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .status-pending {
-    background: #fff3cd;
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
     color: #856404;
     border: 1px solid #ffeaa7;
+    box-shadow: 0 2px 4px rgba(255, 234, 167, 0.4);
 }
 
 .status-approved {
-    background: #d4edda;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
     color: #155724;
     border: 1px solid #c3e6cb;
+    box-shadow: 0 2px 4px rgba(195, 230, 203, 0.4);
 }
 
 .status-denied {
-    background: #f8d7da;
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
     color: #721c24;
     border: 1px solid #f5c6cb;
+    box-shadow: 0 2px 4px rgba(245, 198, 203, 0.4);
 }
 
 .request-details {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding: 12px;
-    background: #f8f9fa;
-    border-radius: 8px;
+    margin-bottom: 18px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    border: 1px solid #dee2e6;
 }
 
 .rental-dates {
@@ -212,16 +326,19 @@
 }
 
 .total-price {
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 700;
     color: #28a745;
+    text-shadow: 0 1px 2px rgba(40, 167, 69, 0.2);
 }
 
 .request-message {
-    background: #e9ecef;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    border-left: 4px solid #007bff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .request-message strong {
@@ -249,55 +366,64 @@
 }
 
 .btn {
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 10px 18px;
+    border-radius: 8px;
     border: none;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 600;
     cursor: pointer;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .btn-approve {
-    background: #28a745;
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
 }
 
 .btn-approve:hover {
-    background: #218838;
+    background: linear-gradient(135deg, #20c997, #17a2b8);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .btn-deny {
-    background: #dc3545;
+    background: linear-gradient(135deg, #dc3545, #c82333);
     color: white;
 }
 
 .btn-deny:hover {
-    background: #c82333;
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 .btn-message {
-    background: #6c757d;
+    background: linear-gradient(135deg, #6c757d, #5a6268);
     color: white;
 }
 
 .btn-message:hover {
-    background: #5a6268;
+    background: linear-gradient(135deg, #5a6268, #495057);
     color: white;
     text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }
 
 .btn-primary {
-    background: #007bff;
+    background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
 }
 
 .btn-primary:hover {
-    background: #0056b3;
+    background: linear-gradient(135deg, #0056b3, #003d82);
     color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
     text-decoration: none;
 }
 

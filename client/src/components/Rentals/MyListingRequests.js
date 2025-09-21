@@ -6,10 +6,18 @@ const MyListingRequests = () => {
     const [listingRequests, setListingRequests] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [actionMessage, setActionMessage] = useState({ type: '', message: '', visible: false });
 
     useEffect(() => {
         fetchMyListings();
     }, []);
+
+    const showActionMessage = (type, message) => {
+        setActionMessage({ type, message, visible: true });
+        setTimeout(() => {
+            setActionMessage({ type: '', message: '', visible: false });
+        }, 5000);
+    };
 
     const fetchMyListings = async () => {
         try {
@@ -68,13 +76,13 @@ const MyListingRequests = () => {
             if (data.success) {
                 // Refresh the data to show updated status
                 await fetchMyListings();
-                alert(`Rental request ${action} successfully!`);
+                showActionMessage('success', `Rental request ${action} successfully!`);
             } else {
-                alert(data.message || `Failed to ${action} request`);
+                showActionMessage('error', data.message || `Failed to ${action} request`);
             }
         } catch (error) {
             console.error(`Error ${action}ing request:`, error);
-            alert(`Failed to ${action} request`);
+            showActionMessage('error', `Failed to ${action} request`);
         }
     };
 
@@ -124,6 +132,23 @@ const MyListingRequests = () => {
 
     return (
         <div className="my-listing-requests">
+            {actionMessage.visible && (
+                <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
+                    <div className="message-content">
+                        <span className="message-icon">
+                            {actionMessage.type === 'success' ? '✅' : '❌'}
+                        </span>
+                        <span className="message-text">{actionMessage.message}</span>
+                        <button 
+                            className="close-message"
+                            onClick={() => setActionMessage({ type: '', message: '', visible: false })}
+                        >
+                            ×
+                        </button>
+                    </div>
+                </div>
+            )}
+            
             <div className="page-header">
                 <h1>Rental Requests on My Listings</h1>
                 <p>Manage requests from other users who want to rent your items</p>

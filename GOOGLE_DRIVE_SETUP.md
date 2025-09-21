@@ -1,6 +1,6 @@
 # Google Drive OAuth Setup Guide (Follow strictly)
 
-## ✅ **SETUP COMPLETE**
+## ✅ SETUP COMPLETE
 
 This RentSphere deployment uses **OAuth2 authentication** to upload images directly to your personal Google Drive with 2TB storage.
 
@@ -37,37 +37,41 @@ Uses the same OAuth credentials from `.env` file.
 
 ## 🎉 Ready for Production
 
-**Google Drive integration is complete and ready for deployment! 📸✨**
+Google Drive integration is complete and ready for deployment! 📸✨
 
-```bash
-# Google Drive Configuration
-GOOGLE_DRIVE_KEY_FILE=./google-drive-credentials.json
-```
+## 🔧 Deployment Configuration
 
-### 7. For Render Deployment
+### For Render Deployment
 
-1. **Upload credentials to Render**:
+1. **Environment Variables Configuration**:
 
+   ```bash
+   GOOGLE_CLIENT_ID=[Your OAuth Client ID]
+   GOOGLE_CLIENT_SECRET=[Your OAuth Client Secret]
+   GOOGLE_REFRESH_TOKEN=[Your Refresh Token]
+   ```
+
+2. **Upload credentials to Render**:
    - In Render dashboard, go to your service
    - Go to "Environment" tab
    - Add environment variable:
      - Key: `GOOGLE_DRIVE_CREDENTIALS`
      - Value: Copy the ENTIRE content of your `google-drive-credentials.json` file
 
-2. **Update environment variables**:
+3. **Update environment variables**:
 
    ```bash
    GOOGLE_DRIVE_KEY_FILE=google-drive-credentials.json
    ```
 
-3. **Create credentials file on server**:
+4. **Create credentials file on server**:
    The app will automatically create the credentials file from the environment variable.
 
 ## 🔧 File Structure Created
 
 Your Google Drive will have this structure:
 
-```
+```text
 📁 rentals/
   📁 john_doe(123)/
     📁 listing_456/
@@ -122,4 +126,4 @@ After setup, test with:
 
 ---
 
-**Ready to upload real rental images! 📸✨**
+## Ready to upload real rental images! 📸✨
