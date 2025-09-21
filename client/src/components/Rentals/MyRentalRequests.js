@@ -263,7 +263,7 @@ const MyRentalRequests = () => {
                             : req
                     ));
                     
-                    // Close payment modal and refresh data
+                    // Close payment modal
                     setPaymentModal({ visible: false, request: null });
                     
                     // Show receipt
@@ -271,8 +271,8 @@ const MyRentalRequests = () => {
                         ...paymentModal.request, 
                         status: 'paid',
                         payment_status: 'completed',
-                        transaction_id: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                        payment_date: new Date().toISOString()
+                        transaction_id: data.request.transaction_id,
+                        payment_date: data.request.payment_date
                     };
                     setReceiptModal({ visible: true, request: updatedRequest });
                     showActionMessage('success', 'Payment completed successfully!');
@@ -280,26 +280,8 @@ const MyRentalRequests = () => {
                     showActionMessage('error', data.message || 'Payment processing failed');
                 }
             } else {
-                // For demo purposes, simulate successful payment even if API doesn't exist
-                // Update the request status to 'paid' in the local state
-                setRequests(prev => prev.map(req => 
-                    req.id === paymentModal.request.id 
-                        ? { ...req, status: 'paid', payment_status: 'completed' }
-                        : req
-                ));
-                
-                setPaymentModal({ visible: false, request: null });
-                
-                // Show receipt with demo data
-                const updatedRequest = { 
-                    ...paymentModal.request, 
-                    status: 'paid',
-                    payment_status: 'completed',
-                    transaction_id: `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    payment_date: new Date().toISOString()
-                };
-                setReceiptModal({ visible: true, request: updatedRequest });
-                showActionMessage('success', 'Payment completed successfully! (Demo mode)');
+                const errorData = await response.json();
+                showActionMessage('error', errorData.message || 'Payment processing failed');
             }
         } catch (error) {
             console.error('Payment error:', error);

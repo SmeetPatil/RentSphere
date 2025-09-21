@@ -204,7 +204,7 @@ router.get('/api/rental-requests/listing/:listingId', isLoggedIn, async (req, re
 router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => {
     try {
         const { requestId } = req.params;
-        const { status } = req.body;
+        const { status, denial_reason } = req.body;
         const userId = req.user.id;
         const userType = req.user.google_id ? 'google' : 'phone';
 
@@ -212,6 +212,14 @@ router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => 
             return res.status(400).json({
                 success: false,
                 message: 'Status must be either approved or denied'
+            });
+        }
+
+        // If denying, require a denial reason
+        if (status === 'denied' && (!denial_reason || denial_reason.trim().length === 0)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Denial reason is required when denying a request'
             });
         }
 
@@ -232,15 +240,28 @@ router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => 
             });
         }
 
-        // Update request status
-        const updateQuery = `
-            UPDATE rental_requests 
-            SET status = $1, updated_at = CURRENT_TIMESTAMP
-            WHERE id = $2
-            RETURNING *
-        `;
+        // Update request status and denial reason if applicable
+        let updateQuery, updateParams;
+        
+        if (status === 'denied') {
+            updateQuery = `
+                UPDATE rental_requests 
+                SET status = $1, denial_reason = $2, updated_at = CURRENT_TIMESTAMP
+                WHERE id = $3
+                RETURNING *
+            `;
+            updateParams = [status, denial_reason.trim(), requestId];
+        } else {
+            updateQuery = `
+                UPDATE rental_requests 
+                SET status = $1, updated_at = CURRENT_TIMESTAMP
+                WHERE id = $2
+                RETURNING *
+            `;
+            updateParams = [status, requestId];
+        }
 
-        const result = await pool.query(updateQuery, [status, requestId]);
+        const result = await pool.query(updateQuery, updateParams);
 
         const updatedRequest = result.rows[0];
 
@@ -300,6 +321,85 @@ router.get('/api/my-rental-requests', isLoggedIn, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to fetch rental requests',
+            error: error.message
+        });
+    }
+});
+
+// Update rental request status to paid after payment completion
+router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { payment_status, payment_method, transaction_id, payment_date } = req.body;
+        const userId = req.user.id;
+        const userType = req.user.google_id ? 'google' : 'phone';
+
+        // Validate payment data
+        if (!payment_status || !payment_method || !transaction_id) {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment status, method, and transaction ID are required'
+            });
+        }
+
+        // First, verify that the request belongs to the current user and is in approved status
+        const verifyQuery = `
+            SELECT rr.*, l.title as listing_title
+            FROM rental_requests rr
+            JOIN listings l ON rr.listing_id = l.id
+            WHERE rr.id = $1 AND rr.renter_user_id = $2 AND rr.renter_user_type = $3 AND rr.status = 'approved'
+        `;
+        
+        const verifyResult = await pool.query(verifyQuery, [requestId, userId, userType]);
+        
+        if (verifyResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Rental request not found or not eligible for payment'
+            });
+        }
+
+        // Update the rental request status to 'paid' and add payment information
+        const updateQuery = `
+            UPDATE rental_requests 
+            SET status = 'paid',
+                payment_status = $1,
+                payment_method = $2,
+                transaction_id = $3,
+                payment_date = $4,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $5
+            RETURNING *
+        `;
+
+        const updateResult = await pool.query(updateQuery, [
+            payment_status,
+            payment_method,
+            transaction_id,
+            payment_date || new Date().toISOString(),
+            requestId
+        ]);
+
+        if (updateResult.rows.length === 0) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to update payment status'
+            });
+        }
+
+        const updatedRequest = updateResult.rows[0];
+
+        res.json({
+            success: true,
+            message: 'Payment completed successfully',
+            request: updatedRequest
+        });
+
+    } catch (error) {
+        console.error('Error processing payment:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to process payment',
             error: error.message
         });
     }

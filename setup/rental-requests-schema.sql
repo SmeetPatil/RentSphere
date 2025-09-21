@@ -9,7 +9,15 @@ CREATE TABLE IF NOT EXISTS rental_requests (
     total_days INTEGER NOT NULL,
     total_price DECIMAL(10,2) NOT NULL,
     message TEXT, -- Message from renter to lister
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied', 'cancelled')),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'denied', 'cancelled', 'paid')),
+    denial_reason TEXT, -- Reason for denial if status is 'denied'
+    
+    -- Payment-related columns
+    payment_status VARCHAR(20) DEFAULT NULL CHECK (payment_status IN ('pending', 'completed', 'failed', 'refunded')),
+    payment_method VARCHAR(20) DEFAULT NULL CHECK (payment_method IN ('card', 'upi', 'cash')),
+    transaction_id VARCHAR(100) DEFAULT NULL,
+    payment_date TIMESTAMP DEFAULT NULL,
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -36,6 +44,7 @@ ADD COLUMN IF NOT EXISTS rental_end_date DATE;
 CREATE INDEX IF NOT EXISTS idx_rental_requests_listing ON rental_requests(listing_id);
 CREATE INDEX IF NOT EXISTS idx_rental_requests_renter ON rental_requests(renter_user_id, renter_user_type);
 CREATE INDEX IF NOT EXISTS idx_rental_requests_status ON rental_requests(status);
+CREATE INDEX IF NOT EXISTS idx_rental_requests_payment_status ON rental_requests(payment_status);
 CREATE INDEX IF NOT EXISTS idx_listings_rental_status ON listings(rental_status);
 
 -- Function to automatically update listing status when rental is approved
@@ -63,8 +72,18 @@ BEGIN
         AND status = 'pending';
     END IF;
     
+    -- If a rental request is paid, keep the listing as rented but update payment info
+    IF NEW.status = 'paid' AND OLD.status = 'approved' THEN
+        -- Listing should already be in rented status, just ensure consistency
+        UPDATE listings 
+        SET 
+            rental_status = 'rented',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = NEW.listing_id;
+    END IF;
+    
     -- If a rental request is denied or cancelled, check if listing should be available again
-    IF NEW.status IN ('denied', 'cancelled') AND OLD.status = 'approved' THEN
+    IF NEW.status IN ('denied', 'cancelled') AND OLD.status IN ('approved', 'paid') THEN
         UPDATE listings 
         SET 
             rental_status = 'available',
