@@ -185,15 +185,9 @@ class GoogleDriveService {
             });
 
             // Generate direct image URL for embedding
-            // Multiple URL formats for better compatibility
+            // Use GoogleUserContent format (same as profile photos)
             const fileId = response.data.id;
-            
-            // Try this format first - works best for embedding
-            const imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-            
-            // Alternative formats (for debugging):
-            // const imageUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
-            // const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
+            const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}=w1200`;
 
             console.log(`📸 Uploaded image: ${fileName}`);
             console.log(`🔗 Image URL: ${imageUrl}`);
