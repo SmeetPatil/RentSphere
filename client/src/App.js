@@ -8,6 +8,9 @@ import {
 import axios from "axios";
 import "./App.css";
 
+import Navbar from './components/Navbar/Navbar';
+import Dashboard from './components/Dashboard/Dashboard';
+import AnimatedBackground from './components/Dashboard/AnimatedBackground';
 import ConversationList from './components/Messaging/ConversationList';
 import Conversation from './components/Messaging/Conversation';
 import NewConversation from './components/Messaging/NewConversation';
@@ -29,6 +32,20 @@ function App() {
   useEffect(() => {
     checkAuthStatus();
   }, []);
+
+  // Add body class for authenticated users to handle navbar padding
+  useEffect(() => {
+    if (user) {
+      document.body.classList.add('navbar-active');
+    } else {
+      document.body.classList.remove('navbar-active');
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('navbar-active');
+    };
+  }, [user]);
 
   // Update page title based on current route
   useEffect(() => {
@@ -81,6 +98,10 @@ function App() {
   return (
     <Router>
       <div className="App">
+        <AnimatedBackground />
+        {/* Show Navbar for authenticated users */}
+        {user && <Navbar user={user} />}
+        
         <Routes>
           <Route
             path="/login"
@@ -575,208 +596,6 @@ function PhoneLoginPage() {
   );
 }
 
-// Enhanced Dashboard Component
-function Dashboard({ user }) {
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleLogout = () => {
-    window.location.href = "/logout";
-  };
-
-  const getGreeting = () => {
-    const hour = currentTime.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
-
-  const getMembershipDuration = () => {
-    if (!user.memberSince) return "New Member";
-    const memberDate = new Date(user.memberSince);
-    const now = new Date();
-    const diffTime = Math.abs(now - memberDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays < 30) return `${diffDays} days`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months`;
-    return `${Math.floor(diffDays / 365)} years`;
-  };
-
-  return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>🌐 RentSphere</h1>
-          <span className="current-time">
-            {currentTime.toLocaleTimeString()}
-          </span>
-        </div>
-        <div className="user-info">
-          <a href="/profile" className="profile-link-header">
-            <img
-              src={user.profilePicture}
-              alt="Profile"
-              className="profile-pic"
-            />
-            <div className="user-details">
-              <span className="user-name">{user.name}</span>
-              <span className="user-type">
-                {user.email ? "Google Account" : "Phone Account"}
-              </span>
-            </div>
-          </a>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
-        </div>
-      </header>
-
-      <main className="dashboard-content">
-        {/* Welcome Section */}
-        <section className="welcome-section">
-          <div className="welcome-card">
-            <h2>
-              {getGreeting()}, {user.name.split(" ")[0]}! 👋
-            </h2>
-            <p>
-              Welcome back to your RentSphere dashboard. Ready to explore some
-              amazing rentals?
-            </p>
-          </div>
-          <div className="stats-cards">
-            <div className="stat-card">
-              <div className="stat-icon">📅</div>
-              <div className="stat-info">
-                <span className="stat-value">{getMembershipDuration()}</span>
-                <span className="stat-label">Member Since</span>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">🏠</div>
-              <div className="stat-info">
-                <span className="stat-value">0</span>
-                <span className="stat-label">Listings</span>
-              </div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-icon">❤️</div>
-              <div className="stat-info">
-                <span className="stat-value">0</span>
-                <span className="stat-label">Favorites</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Quick Actions */}
-        <section className="quick-actions">
-          <h3>Quick Actions</h3>
-          <div className="action-grid">
-            <div className="action-card">
-              <div className="action-icon">🔍</div>
-              <h4>Browse Rentals</h4>
-              <p>Discover amazing tech rentals in your area</p>
-              <a href="/rentals" className="action-btn active">
-                Browse Now
-              </a>
-            </div>
-            <div className="action-card">
-              <div className="action-icon">📝</div>
-              <h4>List Your Item</h4>
-              <p>Rent out your tech items and earn money</p>
-              <a href="/create-listing" className="action-btn active">
-                Create Listing
-              </a>
-            </div>
-
-            <div className="action-card">
-              <div className="action-icon">💬</div>
-              <h4>Messages</h4>
-              <p>Chat with other users</p>
-              <a href="/messages" className="action-btn active">
-                Open Messages
-              </a>
-            </div>
-            <div className="action-card">
-              <div className="action-icon">📋</div>
-              <h4>My Listings</h4>
-              <p>Manage your rental listings</p>
-              <a href="/my-listings" className="action-btn active">
-                View Listings
-              </a>
-            </div>
-            <div className="action-card">
-              <div className="action-icon">📝</div>
-              <h4>My Requests</h4>
-              <p>View rental requests you've sent</p>
-              <a href="/my-rental-requests" className="action-btn active">
-                View Requests
-              </a>
-            </div>
-            <div className="action-card">
-              <div className="action-icon">📥</div>
-              <h4>Incoming Requests</h4>
-              <p>Manage requests on your listings</p>
-              <a href="/my-listing-requests" className="action-btn active">
-                Manage Requests
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Account Overview - Only show if profile is incomplete */}
-        {!(user.email && user.phone) && (
-          <section className="account-overview">
-            <h3>Account Overview</h3>
-            <div className="overview-grid">
-              <div className="overview-card">
-                <h4>Profile Completion</h4>
-                <div className="progress-bar">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${user.email || user.phone ? "75%" : "50%"}`,
-                    }}
-                  ></div>
-                </div>
-                <p>Add more info to improve your profile</p>
-                <a href="/profile" className="complete-profile-btn">
-                  Complete Profile →
-                </a>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Recent Activity */}
-        <section className="recent-activity">
-          <h3>Recent Activity</h3>
-          <div className="activity-card">
-            <div className="activity-item">
-              <div className="activity-icon">🎉</div>
-              <div className="activity-content">
-                <p>
-                  <strong>Welcome to RentSphere!</strong>
-                </p>
-                <p>
-                  Your account has been successfully created. Start exploring
-                  rentals now!
-                </p>
-                <span className="activity-time">Just now</span>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
-}
-
 // Enhanced Profile Component (matching original design)
 function Profile({ user, setUser }) {
   const [editingSection, setEditingSection] = useState(null);
@@ -857,15 +676,6 @@ function Profile({ user, setUser }) {
 
   return (
     <div className="profile-page">
-      <header className="profile-header-nav">
-        <nav className="nav-container">
-          <div className="logo">🌐 RentSphere</div>
-          <a href="/dashboard" className="back-btn">
-            ← Back to Dashboard
-          </a>
-        </nav>
-      </header>
-
       <main className="profile-main-content">
         <div className="profile-card">
           <div className="profile-header-section">

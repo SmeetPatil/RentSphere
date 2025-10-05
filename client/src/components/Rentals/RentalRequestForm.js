@@ -173,7 +173,7 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
                     <>
                         <div className="listing-summary">
                             <h3>{listing.title}</h3>
-                            <p className="price">${listing.price_per_day}/day</p>
+                            <p className="price">₹{listing.price_per_day}/day</p>
                             <p className="category">{listing.category}</p>
                         </div>
 
@@ -209,8 +209,8 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
                     {totalDays > 0 && (
                         <div className="price-calculation">
                             <div className="calculation-row">
-                                <span>{totalDays} day{totalDays !== 1 ? 's' : ''} × ${listing.price_per_day}/day</span>
-                                <span className="total-price">${totalPrice}</span>
+                                <span>{totalDays} day{totalDays !== 1 ? 's' : ''} × ₹{listing.price_per_day}/day</span>
+                                <span className="total-price">₹{totalPrice}</span>
                             </div>
                         </div>
                     )}

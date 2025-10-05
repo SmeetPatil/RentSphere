@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -153,6 +154,7 @@ const RentalBrowse = () => {
           console.error('Geolocation retry error:', error);
           let errorMessage = 'Location access is still required to browse rentals.';
           
+          // eslint-disable-next-line default-case
           switch(error.code) {
             case error.PERMISSION_DENIED:
               errorMessage = 'Location access was denied. Please enable location access in your browser settings and try again.';
@@ -183,9 +185,6 @@ const RentalBrowse = () => {
         <div className="rentals-container">
           <div className="rentals-header">
             <div className="header-left">
-              <Link to="/dashboard" className="back-to-dashboard-btn">
-                ← Dashboard
-              </Link>
               <h1 className="rentals-title">Browse Rentals</h1>
             </div>
           </div>
@@ -219,9 +218,6 @@ const RentalBrowse = () => {
         {/* Header */}
         <div className="rentals-header">
           <div className="header-left">
-            <Link to="/dashboard" className="back-to-dashboard-btn">
-              ← Dashboard
-            </Link>
             <h1 className="rentals-title">
               {selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Rentals` : 'Browse Rentals'}
             </h1>

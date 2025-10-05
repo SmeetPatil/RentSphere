@@ -36,10 +36,10 @@ const ConversationList = () => {
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="conversation-list">
-      <div className="conversation-list-header">
+    <div className="messaging-page">
+      <div className="conversation-list">
+        <div className="conversation-list-header">
         <div className="header-left">
-          <Link to="/dashboard" className="back-to-dashboard-btn">← Dashboard</Link>
           <h2>Messages</h2>
         </div>
         <Link to="/messages/new" className="new-message-btn">New Message</Link>
@@ -73,6 +73,7 @@ const ConversationList = () => {
           ))}
         </ul>
       )}
+      </div>
     </div>
   );
 };

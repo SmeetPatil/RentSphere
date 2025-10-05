@@ -1,27 +1,15 @@
-/* My Rental Requests Page Styles */
+/* My Rental Requests Page Styles - Additional styles for requests */
 .rental-requests-page {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
-    padding: 20px;
+    position: relative;
 }
 
 .requests-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    min-height: 600px;
-    border: 1px solid #f0f0f0;
+    padding: 0;
 }
 
 .page-header {
-    padding: 30px;
-    border-bottom: 1px solid #e5e7eb;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 20px 0;
     text-align: center;
-    position: relative;
 }
 
 .header-navigation {
@@ -30,27 +18,7 @@
     left: 20px;
 }
 
-.back-to-dashboard {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    text-decoration: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.back-to-dashboard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    color: white;
-    text-decoration: none;
-}
+/* Back button now uses standard styling from Rentals.css */
 
 @media (max-width: 768px) {
     .header-navigation {
@@ -155,7 +123,9 @@
 /* Tabs Styling */
 .tabs-container {
     padding: 0 30px;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
 }
 
 .tabs {
@@ -180,18 +150,21 @@
 }
 
 .tab:hover {
-    color: #495057;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
 }
 
 .tab.active {
     color: #007bff;
     border-bottom-color: #007bff;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(15px);
 }
 
 .tab-count {
-    background: linear-gradient(135deg, #007bff, #0056b3);
+    background: rgba(0, 123, 255, 0.9);
+    backdrop-filter: blur(10px);
     color: white;
     font-size: 12px;
     font-weight: 600;
@@ -199,6 +172,7 @@
     border-radius: 12px;
     min-width: 20px;
     text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .tab.active .tab-count {
@@ -284,17 +258,25 @@
 }
 
 .request-card {
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
     overflow: hidden;
-    transition: all 0.3s ease;
-    background: white;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .request-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    transform: translateY(-4px) scale(1.02);
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 
+        0 16px 50px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .request-image {
@@ -322,17 +304,19 @@
 }
 
 .status-pending {
-    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    background: rgba(255, 234, 167, 0.9);
+    backdrop-filter: blur(10px);
     color: #856404;
-    border: 1px solid #ffeaa7;
-    box-shadow: 0 2px 4px rgba(255, 234, 167, 0.4);
+    border: 1px solid rgba(255, 234, 167, 0.5);
+    box-shadow: 0 4px 15px rgba(255, 234, 167, 0.3);
 }
 
 .status-approved {
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    background: rgba(195, 230, 203, 0.9);
+    backdrop-filter: blur(10px);
     color: #155724;
-    border: 1px solid #c3e6cb;
-    box-shadow: 0 2px 4px rgba(195, 230, 203, 0.4);
+    border: 1px solid rgba(195, 230, 203, 0.5);
+    box-shadow: 0 4px 15px rgba(195, 230, 203, 0.3);
 }
 
 .status-paid {

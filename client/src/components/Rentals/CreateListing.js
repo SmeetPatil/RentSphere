@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Rentals.css';
 
@@ -28,6 +28,10 @@ const CreateListing = () => {
   const [selectedImages, setSelectedImages] = useState([]);
   const [imagePreview, setImagePreview] = useState([]);
   const [imageUploading, setImageUploading] = useState(false);
+  
+  // Manual specification entry
+  const [newSpecKey, setNewSpecKey] = useState('');
+  const [newSpecValue, setNewSpecValue] = useState('');
 
   // Get user location
   useEffect(() => {
@@ -101,6 +105,31 @@ const CreateListing = () => {
     }));
   };
 
+  const addManualSpecification = () => {
+    if (newSpecKey.trim() && newSpecValue.trim()) {
+      const formattedKey = newSpecKey.toLowerCase().replace(/\s+/g, '_');
+      handleSpecificationChange(formattedKey, newSpecValue);
+      setNewSpecKey('');
+      setNewSpecValue('');
+    }
+  };
+
+  const removeSpecification = (keyToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: Object.fromEntries(
+        Object.entries(prev.specifications).filter(([key]) => key !== keyToRemove)
+      )
+    }));
+  };
+
+  const clearAllSpecifications = () => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: {}
+    }));
+  };
+
   const getCurrentCategory = () => {
     return categories.find(cat => cat.name === formData.category);
   };
@@ -133,62 +162,204 @@ const CreateListing = () => {
 
   const generateMockSpecifications = (category, title) => {
     const specs = {};
+    const titleLower = title.toLowerCase();
     
-    // Extract brand from title (simple approach)
-    const commonBrands = {
-      cameras: ['Canon', 'Nikon', 'Sony', 'Fujifilm'],
-      laptops: ['Apple', 'Dell', 'HP', 'Lenovo', 'ASUS'],
-      drones: ['DJI', 'Parrot', 'Autel'],
-      'gaming consoles': ['Sony', 'Microsoft', 'Nintendo'],
-      headphones: ['Sony', 'Bose', 'Audio-Technica', 'Sennheiser'],
-      speakers: ['JBL', 'Bose', 'Sony', 'Marshall']
+    // Advanced brand detection with model extraction
+    const brandPatterns = {
+      cameras: {
+        'Canon': ['eos', 'rebel', '5d', '6d', '7d', '90d', '80d', 't7i', 't8i'],
+        'Nikon': ['d850', 'd750', 'd500', 'd3500', 'd5600', 'd7500', 'z6', 'z7'],
+        'Sony': ['a7', 'a6000', 'a6300', 'a6400', 'a6500', 'fx', 'alpha'],
+        'Fujifilm': ['x-t', 'x-pro', 'x100', 'xt3', 'xt4', 'xt30'],
+        'Panasonic': ['gh5', 'gh6', 'g9', 'fz1000', 'lumix'],
+        'Olympus': ['om-d', 'pen', 'e-m1', 'e-m5', 'e-m10']
+      },
+      laptops: {
+        'Apple': ['macbook', 'air', 'pro', 'm1', 'm2', 'm3'],
+        'Dell': ['xps', 'inspiron', 'latitude', 'alienware', 'precision'],
+        'HP': ['spectre', 'envy', 'pavilion', 'elitebook', 'omen'],
+        'Lenovo': ['thinkpad', 'ideapad', 'yoga', 'legion', 't14', 't480'],
+        'ASUS': ['zenbook', 'vivobook', 'rog', 'tuf', 'expertbook'],
+        'Microsoft': ['surface', 'laptop', 'studio', 'book'],
+        'Acer': ['swift', 'aspire', 'predator', 'nitro', 'spin']
+      },
+      drones: {
+        'DJI': ['mavic', 'phantom', 'inspire', 'mini', 'air', 'fpv', 'avata'],
+        'Parrot': ['anafi', 'bebop', 'disco', 'mambo'],
+        'Autel': ['evo', 'nano', 'lite', 'orange'],
+        'Skydio': ['skydio 2', 'x2'],
+        'Holy Stone': ['hs720', 'hs110d', 'hs100']
+      }
     };
 
-    const brands = commonBrands[category] || [];
-    const detectedBrand = brands.find(brand => 
-      title.toLowerCase().includes(brand.toLowerCase())
-    );
+    // Detect brand and model
+    let detectedBrand = null;
+    let detectedModel = '';
+    
+    if (brandPatterns[category]) {
+      for (const [brand, models] of Object.entries(brandPatterns[category])) {
+        if (titleLower.includes(brand.toLowerCase()) || 
+            models.some(model => titleLower.includes(model))) {
+          detectedBrand = brand;
+          detectedModel = models.find(model => titleLower.includes(model)) || '';
+          break;
+        }
+      }
+    }
 
     if (detectedBrand) {
       specs.brand = detectedBrand;
+      if (detectedModel) {
+        specs.model = detectedModel.toUpperCase();
+      }
     }
 
-    // Add category-specific specifications
+    // Generate comprehensive category-specific specifications
     switch (category) {
       case 'cameras':
-        specs.type = 'DSLR';
-        specs.megapixels = '24MP';
-        specs.video = '4K';
-        specs.lens_mount = 'EF';
+        specs.type = detectedBrand === 'Sony' ? 'Mirrorless' : 
+                   detectedBrand === 'Canon' ? 'DSLR' : 
+                   detectedBrand === 'Fujifilm' ? 'Mirrorless' : 'DSLR';
+        specs.sensor_size = titleLower.includes('full frame') ? 'Full Frame' : 
+                           titleLower.includes('aps-c') ? 'APS-C' : 'APS-C';
+        specs.megapixels = titleLower.includes('50mp') ? '50.6MP' :
+                          titleLower.includes('45mp') ? '45.7MP' :
+                          titleLower.includes('32mp') ? '32.5MP' :
+                          titleLower.includes('24mp') ? '24.2MP' : '24.2MP';
+        specs.video_recording = '4K UHD at 30fps';
+        specs.iso_range = '100-25600 (expandable to 51200)';
+        specs.autofocus_points = detectedBrand === 'Sony' ? '693 phase-detection' : '45 cross-type';
+        specs.viewfinder = specs.type === 'Mirrorless' ? '2.36M-dot OLED EVF' : 'Optical pentaprism';
+        specs.lcd_screen = '3.2" vari-angle touchscreen';
+        specs.battery_life = '420 shots (CIPA rated)';
+        specs.storage = 'Dual SD/CFexpress card slots';
+        specs.connectivity = 'Wi-Fi, Bluetooth, USB-C';
+        specs.weight = detectedBrand === 'Canon' ? '890g (body only)' : '650g (body only)';
         break;
+        
       case 'laptops':
-        specs.processor = 'Intel i7';
-        specs.ram = '16GB';
-        specs.storage = '512GB SSD';
-        specs.screen_size = '15.6"';
+        const isApple = detectedBrand === 'Apple';
+        const isGaming = titleLower.includes('gaming') || titleLower.includes('rog') || 
+                        titleLower.includes('legion') || titleLower.includes('omen');
+        
+        specs.processor = isApple ? 'Apple M2 Pro 10-core' :
+                         isGaming ? 'Intel Core i7-12700H' :
+                         titleLower.includes('i9') ? 'Intel Core i9-12900H' :
+                         titleLower.includes('i5') ? 'Intel Core i5-12500H' : 'Intel Core i7-12700H';
+        specs.graphics = isApple ? 'Integrated 16-core GPU' :
+                        isGaming ? 'NVIDIA GeForce RTX 3070' :
+                        titleLower.includes('rtx') ? 'NVIDIA GeForce RTX 3060' : 'Intel Iris Xe Graphics';
+        specs.ram = titleLower.includes('32gb') ? '32GB DDR4' :
+                   titleLower.includes('8gb') ? '8GB DDR4' : '16GB DDR4';
+        specs.storage = titleLower.includes('1tb') ? '1TB NVMe SSD' :
+                       titleLower.includes('256gb') ? '256GB NVMe SSD' : '512GB NVMe SSD';
+        specs.screen_size = titleLower.includes('13') ? '13.3"' :
+                           titleLower.includes('17') ? '17.3"' :
+                           titleLower.includes('14') ? '14"' : '15.6"';
+        specs.display = isGaming ? '1920x1080 144Hz IPS' : '1920x1080 60Hz IPS';
+        specs.battery_life = isApple ? 'Up to 18 hours' : isGaming ? 'Up to 6 hours' : 'Up to 10 hours';
+        specs.operating_system = isApple ? 'macOS Ventura' : 'Windows 11 Home';
+        specs.ports = isApple ? '3x Thunderbolt 4, SDXC, 3.5mm jack' : '2x USB-A, 2x USB-C, HDMI, Ethernet';
+        specs.weight = parseFloat(specs.screen_size) <= 14 ? '1.4kg' : '2.1kg';
+        specs.keyboard = isGaming ? 'RGB backlit mechanical' : 'Backlit chiclet';
         break;
+        
       case 'drones':
-        specs.camera = '4K';
-        specs.flight_time = '30 minutes';
-        specs.range = '10km';
-        specs.weight = '900g';
+        const isDJI = detectedBrand === 'DJI';
+        const isMini = titleLower.includes('mini') || titleLower.includes('nano');
+        
+        specs.camera_resolution = titleLower.includes('4k') ? '4K UHD' :
+                                 titleLower.includes('2.7k') ? '2.7K' : '4K UHD';
+        specs.gimbal = isDJI ? '3-axis mechanical gimbal' : '2-axis gimbal';
+        specs.max_flight_time = isMini ? '31 minutes' :
+                               titleLower.includes('pro') ? '46 minutes' : '34 minutes';
+        specs.max_transmission_range = isDJI ? '10km (FCC)' : '4km';
+        specs.max_speed = isMini ? '16 m/s (Sport mode)' : '19 m/s (Sport mode)';
+        specs.weight = isMini ? '249g' :
+                      titleLower.includes('pro') ? '907g' : '570g';
+        specs.obstacle_sensing = isDJI ? 'Omnidirectional' : 'Forward and downward';
+        specs.intelligent_modes = 'QuickShots, ActiveTrack, Point of Interest';
+        specs.storage = 'Internal 8GB + microSD up to 256GB';
+        specs.controller = isDJI ? 'DJI RC with 5.5" screen' : 'Smartphone mount controller';
+        specs.operating_temperature = '-10°C to 40°C';
+        specs.wind_resistance = 'Level 5 (up to 10.7 m/s)';
         break;
+        
       case 'gaming consoles':
-        specs.storage = '1TB';
-        specs.resolution = '4K';
-        specs.controllers = '1';
+        const isPlayStation = detectedBrand === 'Sony' || titleLower.includes('playstation') || titleLower.includes('ps5');
+        const isXbox = detectedBrand === 'Microsoft' || titleLower.includes('xbox');
+        const isSwitch = detectedBrand === 'Nintendo' || titleLower.includes('switch');
+        
+        if (isPlayStation) {
+          specs.model = titleLower.includes('ps5') ? 'PlayStation 5' : 'PlayStation 4 Pro';
+          specs.processor = 'Custom AMD Zen 2 8-core';
+          specs.graphics = 'Custom AMD RDNA 2 GPU';
+          specs.memory = '16GB GDDR6';
+          specs.storage = titleLower.includes('digital') ? '825GB SSD (Digital Edition)' : '825GB SSD';
+          specs.max_resolution = '4K UHD (2160p)';
+          specs.hdr_support = 'HDR10';
+          specs.audio = '3D Audio with Tempest Engine';
+          specs.backwards_compatibility = 'PS4 games compatible';
+        } else if (isXbox) {
+          specs.model = titleLower.includes('series x') ? 'Xbox Series X' : 'Xbox Series S';
+          specs.processor = 'Custom AMD Zen 2 8-core';
+          specs.graphics = titleLower.includes('series x') ? 'Custom AMD RDNA 2 12 TFLOPS' : 'Custom AMD RDNA 2 4 TFLOPS';
+          specs.memory = '16GB GDDR6';
+          specs.storage = titleLower.includes('series x') ? '1TB NVMe SSD' : '512GB NVMe SSD';
+          specs.max_resolution = titleLower.includes('series x') ? '4K UHD (2160p)' : '1440p (upscaled to 4K)';
+          specs.backwards_compatibility = 'Xbox One, Xbox 360, Original Xbox';
+        } else if (isSwitch) {
+          specs.model = titleLower.includes('oled') ? 'Nintendo Switch OLED' : 'Nintendo Switch';
+          specs.display = titleLower.includes('oled') ? '7" OLED touchscreen' : '6.2" LCD touchscreen';
+          specs.resolution_docked = '1920x1080 (TV mode)';
+          specs.resolution_handheld = '1280x720 (Handheld mode)';
+          specs.storage = '32GB internal + microSDXC up to 2TB';
+          specs.battery_life = '4.5 - 9 hours';
+          specs.controllers = 'Joy-Con controllers included';
+        }
+        specs.connectivity = 'Wi-Fi, Bluetooth, Ethernet (adapter may be required)';
+        specs.included_controllers = '1 wireless controller';
         break;
+        
       case 'headphones':
-        specs.type = 'Over-ear';
-        specs.wireless = 'Yes';
-        specs.noise_cancelling = 'Yes';
-        specs.battery_life = '30 hours';
+        const isWireless = titleLower.includes('wireless') || titleLower.includes('bluetooth');
+        const isNoiseCancelling = titleLower.includes('noise') || titleLower.includes('anc');
+        const isOverEar = titleLower.includes('over') || !titleLower.includes('in-ear');
+        
+        specs.type = isOverEar ? 'Over-ear' : 'In-ear';
+        specs.connectivity = isWireless ? 'Wireless (Bluetooth 5.0) + Wired' : 'Wired (3.5mm)';
+        specs.noise_cancelling = isNoiseCancelling ? 'Active Noise Cancelling (ANC)' : 'Passive isolation';
+        specs.driver_size = isOverEar ? '40mm dynamic drivers' : '9mm dynamic drivers';
+        specs.frequency_response = '20Hz - 20kHz';
+        specs.impedance = isOverEar ? '32 ohms' : '16 ohms';
+        specs.battery_life = isWireless ? (isNoiseCancelling ? '30 hours (ANC off), 20 hours (ANC on)' : '40 hours') : 'N/A';
+        specs.charging = isWireless ? 'USB-C, Quick charge (15 min = 3 hours)' : 'N/A';
+        specs.weight = isOverEar ? '250g' : '6g per earbud';
+        specs.controls = isWireless ? 'Touch controls + voice assistant' : 'Inline remote';
+        specs.microphone = 'Built-in microphone for calls';
+        specs.compatibility = 'iOS, Android, Windows, Mac';
+        if (detectedBrand === 'Sony') {
+          specs.special_features = 'LDAC codec, 360 Reality Audio';
+        } else if (detectedBrand === 'Bose') {
+          specs.special_features = 'Bose QuietComfort technology';
+        }
         break;
+        
       default:
+        // Generic specifications for other categories
         specs.condition = 'Excellent';
-        specs.warranty = 'Available';
+        specs.age = titleLower.includes('new') ? 'Brand new' : 
+                   titleLower.includes('2024') ? 'Less than 1 year' : '1-2 years';
+        specs.warranty = 'Manufacturer warranty included';
+        specs.original_packaging = 'Yes, with all original accessories';
+        specs.usage_hours = 'Light usage, well maintained';
     }
-
+    
+    // Add common specifications for all items
+    specs.condition = specs.condition || 'Excellent';
+    specs.included_accessories = 'All original accessories and manuals';
+    specs.rental_requirements = 'Valid ID and security deposit required';
+    
     return specs;
   };
 
@@ -359,9 +530,6 @@ const CreateListing = () => {
         {/* Header */}
         <div className="rentals-header">
           <div className="header-left">
-            <Link to="/dashboard" className="back-to-dashboard-btn">
-              ← Dashboard
-            </Link>
             <h1 className="rentals-title">Create New Listing</h1>
           </div>
         </div>
@@ -456,33 +624,92 @@ const CreateListing = () => {
             <div className="form-section">
               <div className="section-header">
                 <h3>Specifications</h3>
-                <button
-                  type="button"
-                  onClick={generateSpecifications}
-                  className="ai-generate-btn"
-                  disabled={loading}
-                >
-                  🤖 Generate with AI
-                </button>
+                <div className="spec-buttons">
+                  <button
+                    type="button"
+                    onClick={generateSpecifications}
+                    className="ai-generate-btn"
+                    disabled={loading}
+                  >
+                    🤖 Generate with AI
+                  </button>
+                  {Object.keys(formData.specifications).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearAllSpecifications}
+                      className="clear-specs-btn"
+                    >
+                      🗑️ Clear All
+                    </button>
+                  )}
+                </div>
               </div>
               
-              <div className="specifications-grid">
-                {Object.entries(formData.specifications).map(([key, value]) => (
-                  <div key={key} className="form-group">
-                    <label>{key.replace(/_/g, ' ').toUpperCase()}</label>
+              {/* Manual Specification Entry */}
+              <div className="manual-spec-entry">
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Specification Name</label>
                     <input
                       type="text"
-                      value={value}
-                      onChange={(e) => handleSpecificationChange(key, e.target.value)}
+                      value={newSpecKey}
+                      onChange={(e) => setNewSpecKey(e.target.value)}
+                      placeholder="e.g., Brand, Model, Color"
                     />
+                  </div>
+                  <div className="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      value={newSpecValue}
+                      onChange={(e) => setNewSpecValue(e.target.value)}
+                      placeholder="e.g., Canon, EOS R5, Black"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>&nbsp;</label>
+                    <button
+                      type="button"
+                      onClick={addManualSpecification}
+                      className="add-spec-btn"
+                      disabled={!newSpecKey.trim() || !newSpecValue.trim()}
+                    >
+                      ➕ Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Existing Specifications */}
+              <div className="specifications-grid">
+                {Object.entries(formData.specifications).map(([key, value]) => (
+                  <div key={key} className="spec-item">
+                    <div className="form-group">
+                      <label>{key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</label>
+                      <div className="spec-input-group">
+                        <input
+                          type="text"
+                          value={value}
+                          onChange={(e) => handleSpecificationChange(key, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeSpecification(key)}
+                          className="remove-spec-btn"
+                          title="Remove this specification"
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ))}
                 
                 {Object.keys(formData.specifications).length === 0 && (
-                  <p className="no-specs">
-                    Click "Generate with AI" to automatically detect specifications, 
-                    or add them manually by selecting a category and entering a title first.
-                  </p>
+                  <div className="no-specs">
+                    <p>📋 No specifications added yet</p>
+                    <p>Use AI generation for smart detection or add specifications manually above.</p>
+                  </div>
                 )}
               </div>
             </div>

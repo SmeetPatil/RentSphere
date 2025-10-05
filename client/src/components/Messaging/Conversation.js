@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import './Messaging.css';
+import './Messaging.css'; // Updated with new send button styles
 
 const Conversation = ({ user }) => {
   const { conversationId } = useParams();
@@ -79,8 +79,9 @@ const Conversation = ({ user }) => {
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="conversation">
-      <div className="conversation-header">
+    <div className="messaging-page">
+      <div className="conversation">
+        <div className="conversation-header">
         <Link to="/messages" className="back-button">←</Link>
         <div className="conversation-user">
           <img 
@@ -182,8 +183,13 @@ const Conversation = ({ user }) => {
           placeholder="Type a message..."
           className="message-input"
         />
-        <button type="submit" className="send-button">Send</button>
+        <button type="submit" className="send-button" title="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
       </form>
+      </div>
     </div>
   );
 };

@@ -1,8 +1,6 @@
-/* My Listing Requests Styles */
+/* My Listing Requests Styles - Additional styles for listing requests */
 .my-listing-requests {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
+    position: relative;
 }
 
 /* Action Message Styles */

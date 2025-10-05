@@ -1,3 +1,18 @@
+/* Global CSS Reset and Base Styles */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,9 +20,241 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "kern" 1;
+  font-kerning: normal;
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Prevent zoom on inputs on iOS */
+input[type="color"],
+input[type="date"],
+input[type="datetime"],
+input[type="datetime-local"],
+input[type="email"],
+input[type="month"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="text"],
+input[type="time"],
+input[type="url"],
+input[type="week"],
+select:focus,
+textarea {
+  font-size: 16px;
+}
+
+/* Improve button accessibility */
+button,
+[role="button"] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Remove default button styles */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Improve image performance */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Leaflet Custom Marker Styles - Global Override */
+.leaflet-marker-icon.custom-marker-icon {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.emoji-pin {
+  width: 50px !important;
+  height: 50px !important;
+  background: #1a202c !important;
+  border: 4px solid white !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 28px !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6) !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease !important;
+  pointer-events: auto !important;
+}
+
+.emoji-pin:hover {
+  transform: scale(1.2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7) !important;
+}
+
+.leaflet-marker-icon.custom-marker-icon {
+  pointer-events: auto !important;
+}
+
+/* Enhanced Popup Styles */
+.leaflet-popup.rental-popup .leaflet-popup-content-wrapper {
+  background: #ffffff !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup.rental-popup .leaflet-popup-content {
+  margin: 0 !important;
+  width: 280px !important;
+}
+
+.leaflet-popup.rental-popup .leaflet-popup-tip {
+  background: #ffffff !important;
+}
+
+.enhanced-tooltip {
+  width: 280px;
+  background: #ffffff !important;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tooltip-header {
+  width: 100%;
+  height: 140px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tooltip-no-image {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.no-image-icon {
+  font-size: 48px;
+}
+
+.tooltip-listing-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tooltip-body {
+  padding: 12px;
+  background: #ffffff !important;
+}
+
+.tooltip-title {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #2d3748 !important;
+  margin-bottom: 10px !important;
+  line-height: 1.3 !important;
+}
+
+.tooltip-owner-section {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-bottom: 10px !important;
+}
+
+.tooltip-owner-avatar {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid #e2e8f0 !important;
+  flex-shrink: 0 !important;
+}
+
+.tooltip-avatar-placeholder {
+  background: #667eea !important;
+  color: white !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+.tooltip-owner {
+  font-size: 12px !important;
+  color: #718096 !important;
+}
+
+.tooltip-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding-top: 8px !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+.tooltip-price {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #667eea !important;
+}
+
+.tooltip-distance {
+  font-size: 11px !important;
+  color: #a0aec0 !important;
+  font-weight: 500 !important;
+}
+
+.tooltip-view-btn {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.2s ease;
+}
+
+.tooltip-view-btn:hover {
+  transform: translateY(-2px);
 }

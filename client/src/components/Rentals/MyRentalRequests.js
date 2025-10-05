@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import './Rentals.css';
 import './MyRentalRequests.css';
 
 const MyRentalRequests = () => {
@@ -153,9 +154,9 @@ const MyRentalRequests = () => {
 
                             <div className="request-price">
                                 <span className="price-breakdown">
-                                    ${request.listing_price_per_day}/day × {request.total_days} days
+                                    ₹{request.listing_price_per_day}/day × {request.total_days} days
                                 </span>
-                                <span className="total-price">${request.total_price}</span>
+                                <span className="total-price">₹{request.total_price}</span>
                             </div>
 
                             {request.message && (
@@ -312,8 +313,8 @@ const MyRentalRequests = () => {
     const tabCounts = getTabCounts();
 
     return (
-        <div className="rental-requests-page">
-            <div className="requests-container">
+        <div className="rentals-page">
+            <div className="rentals-container">
                 {actionMessage.visible && (
                     <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
                         <div className="message-content">
@@ -331,30 +332,30 @@ const MyRentalRequests = () => {
                     </div>
                 )}
 
-                <div className="page-header">
-                    <div className="header-navigation">
-                        <Link to="/dashboard" className="back-to-dashboard">
-                            ← Back to Dashboard
-                        </Link>
+                {/* Header */}
+                <div className="rentals-header">
+                    <div className="header-left">
+                        <h1 className="rentals-title">My Rental Requests</h1>
                     </div>
-                    <h1>My Rental Requests</h1>
-                    <p>Track the status of your rental requests</p>
                 </div>
 
-                <div className="tabs-container">
-                    <div className="tabs">
-                        {['pending', 'approved', 'paid', 'denied'].map(tab => (
-                            <button
-                                key={tab}
-                                className={`tab ${activeTab === tab ? 'active' : ''}`}
-                                onClick={() => setActiveTab(tab)}
-                            >
-                                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                {tabCounts[tab] > 0 && (
-                                    <span className="tab-count">{tabCounts[tab]}</span>
-                                )}
-                            </button>
-                        ))}
+                {/* Filters/Tabs Section */}
+                <div className="form-section">
+                    <div className="tabs-container">
+                        <div className="tabs">
+                            {['pending', 'approved', 'paid', 'denied'].map(tab => (
+                                <button
+                                    key={tab}
+                                    className={`tab ${activeTab === tab ? 'active' : ''}`}
+                                    onClick={() => setActiveTab(tab)}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                    {tabCounts[tab] > 0 && (
+                                        <span className="tab-count">{tabCounts[tab]}</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -541,7 +542,7 @@ const ReceiptModal = ({ request, onClose }) => {
                             </div>
                             <div className="detail-row">
                                 <span>Rate:</span>
-                                <span>${request.listing_price_per_day}/day</span>
+                                <span>₹{request.listing_price_per_day}/day</span>
                             </div>
                         </div>
 

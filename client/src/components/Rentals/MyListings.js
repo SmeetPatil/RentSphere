@@ -122,9 +122,6 @@ const MyListings = () => {
         {/* Header */}
         <div className="rentals-header">
           <div className="header-left">
-            <Link to="/dashboard" className="back-to-dashboard-btn">
-              ← Dashboard
-            </Link>
             <h1 className="rentals-title">My Listings</h1>
           </div>
           <Link to="/create-listing" className="new-message-btn">

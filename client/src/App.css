@@ -5,14 +5,63 @@
   box-sizing: border-box;
 }
 
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: transparent;
   min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Body class for pages with navbar */
+body.navbar-active {
+  padding-top: 80px;
 }
 
 .App {
   min-height: 100vh;
+  width: 100%;
+  position: relative;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Main content spacing for floating navbar */
+.dashboard-content,
+.profile-main-content,
+.conversation-list,
+.conversation,
+.new-conversation,
+.rental-browse,
+.create-listing,
+.edit-listing,
+.my-listings,
+.rental-detail,
+.my-rental-requests-page,
+.my-listing-requests-page {
+  margin-top: 0;
+  padding-top: 1rem;
+  background: transparent;
+}
+
+/* Enhanced container for better visual hierarchy */
+.dashboard-content {
+  padding: 1rem 2rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem 1rem 2rem;
+  }
 }
 
 /* Loading */
@@ -1434,4 +1483,186 @@ body {
     margin: 1rem;
     padding: 2rem 1.5rem;
   }
+}
+
+/* Enhanced Responsive Design */
+/* Large Desktop */
+@media (min-width: 1441px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1025px) and (max-width: 1440px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+/* Tablet Landscape */
+@media (min-width: 769px) and (max-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+  
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+/* Tablet Portrait and Small Desktop */
+@media (min-width: 641px) and (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+/* Mobile Landscape */
+@media (min-width: 481px) and (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+/* Mobile Portrait */
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 0 0.75rem;
+  }
+  
+  /* Improve touch targets */
+  button,
+  .btn,
+  a[role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve form inputs */
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 12px;
+  }
+}
+
+/* High DPI Display Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  /* Dark mode styles can be added here if needed */
+}
+
+/* Global responsive utilities */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.gap-1 {
+  gap: 0.5rem;
+}
+
+.gap-2 {
+  gap: 1rem;
+}
+
+.gap-3 {
+  gap: 1.5rem;
+}
+
+/* Responsive spacing */
+.mt-responsive {
+  margin-top: clamp(1rem, 4vw, 2rem);
+}
+
+.mb-responsive {
+  margin-bottom: clamp(1rem, 4vw, 2rem);
+}
+
+.p-responsive {
+  padding: clamp(1rem, 4vw, 2rem);
+}
+
+/* Fluid typography */
+.text-fluid-sm {
+  font-size: clamp(0.875rem, 2vw, 1rem);
+}
+
+.text-fluid-base {
+  font-size: clamp(1rem, 2.5vw, 1.125rem);
+}
+
+.text-fluid-lg {
+  font-size: clamp(1.125rem, 3vw, 1.25rem);
+}
+
+.text-fluid-xl {
+  font-size: clamp(1.25rem, 4vw, 1.5rem);
+}
+
+.text-fluid-2xl {
+  font-size: clamp(1.5rem, 5vw, 2rem);
+}
+
+.text-fluid-3xl {
+  font-size: clamp(2rem, 6vw, 3rem);
 }

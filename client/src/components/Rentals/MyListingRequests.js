@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import './Rentals.css';
 import './MyListingRequests.css';
 
 const MyListingRequests = () => {
@@ -185,7 +186,7 @@ const MyListingRequests = () => {
                 <div className="request-header">
                     <div className="listing-info">
                         <h4 className="listing-title">{listing.title}</h4>
-                        <p className="listing-price">${listing.price_per_day}/day</p>
+                        <p className="listing-price">₹{listing.price_per_day}/day</p>
                     </div>
                     <div className="renter-info">
                         {request.renter_profile_picture && (
@@ -310,46 +311,47 @@ const MyListingRequests = () => {
     };
 
     return (
-        <div className="my-listing-requests">
-            {actionMessage.visible && (
-                <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
-                    <div className="message-content">
-                        <span className="message-icon">
-                            {actionMessage.type === 'success' ? '✅' : '❌'}
-                        </span>
-                        <span className="message-text">{actionMessage.message}</span>
-                        <button 
-                            className="close-message"
-                            onClick={() => setActionMessage({ type: '', message: '', visible: false })}
-                        >
-                            ×
-                        </button>
+        <div className="rentals-page">
+            <div className="rentals-container">
+                {actionMessage.visible && (
+                    <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
+                        <div className="message-content">
+                            <span className="message-icon">
+                                {actionMessage.type === 'success' ? '✅' : '❌'}
+                            </span>
+                            <span className="message-text">{actionMessage.message}</span>
+                            <button 
+                                className="close-message"
+                                onClick={() => setActionMessage({ type: '', message: '', visible: false })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Header */}
+                <div className="rentals-header">
+                    <div className="header-left">
+                        <h1 className="rentals-title">Incoming Requests</h1>
                     </div>
                 </div>
-            )}
-            
-            <div className="page-header">
-                <div className="header-navigation">
-                    <Link to="/dashboard" className="back-to-dashboard">
-                        ← Back to Dashboard
-                    </Link>
-                </div>
-                <h1>Rental Requests on My Listings</h1>
-                <p>Manage requests from other users who want to rent your items</p>
-            </div>
 
-            {getAllRequests().length === 0 ? (
-                <div className="no-requests">
-                    <h3>No rental requests yet</h3>
-                    <p>When someone requests to rent your items, they'll appear here.</p>
-                    <Link to="/my-listings" className="btn btn-primary">
-                        View My Listings
-                    </Link>
-                </div>
-            ) : (
-                <div className="requests-container">
-                    {/* Tab Navigation */}
-                    <div className="tabs-container">
+                {getAllRequests().length === 0 ? (
+                    <div className="form-section">
+                        <div className="no-listings">
+                            <h3>No rental requests yet</h3>
+                            <p>When someone requests to rent your items, they'll appear here.</p>
+                            <Link to="/my-listings" className="submit-btn">
+                                View My Listings
+                            </Link>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        {/* Filters/Tabs Section */}
+                        <div className="form-section">
+                            <div className="tabs-container">
                         <div className="tabs">
                             {['pending', 'approved', 'paid', 'denied'].map(tab => {
                                 const count = getTabCounts()[tab];
@@ -367,12 +369,13 @@ const MyListingRequests = () => {
                         </div>
                     </div>
 
-                    {/* Tab Content */}
-                    <div className="tab-content">
-                        {renderTabContent()}
+                        {/* Tab Content */}
+                        <div className="tab-content">
+                            {renderTabContent()}
+                        </div>
                     </div>
-                </div>
-            )}
+                </>
+                )}
 
             {/* Denial Reason Modal */}
             {denialModal.visible && (
@@ -415,6 +418,7 @@ const MyListingRequests = () => {
                     </div>
                 </div>
             )}
+            </div>
         </div>
     );
 };

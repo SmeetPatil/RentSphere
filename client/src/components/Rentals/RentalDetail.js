@@ -330,9 +330,6 @@ const RentalDetail = () => {
         <div className="rentals-container">
           <div className="rentals-header">
             <div className="header-left">
-              <Link to="/rentals" className="back-to-dashboard-btn">
-                ← Back to Rentals
-              </Link>
               <h1 className="rentals-title">Rental Details</h1>
             </div>
           </div>
