@@ -13,6 +13,7 @@ const messagingRoutes = require("./routes/messaging.routes");
 const rentalRoutes = require("./routes/rental.routes");
 const imageRoutes = require("./routes/image.routes");
 const rentalRequestsRoutes = require("./routes/rental-requests.routes");
+const deliveryRatingRoutes = require("./routes/delivery-rating.routes");
 
 const app = express();
 
@@ -20,19 +21,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from public directory (legacy HTML files)
-app.use("/legacy", express.static(path.join(__dirname, "public")));
-
-// Serve uploaded images
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Serve React build files
-app.use(express.static(path.join(__dirname, "client/build")));
-
-// Serve React app's static files
-app.use(express.static("client/build"));
-
-// Create session
+// Create session (BEFORE routes that need authentication)
 app.use(
   session({
     resave: false,
@@ -49,7 +38,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Use route modules
+// API ROUTES FIRST (before static files)
 app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
 app.use("/", authRoutes); // Authentication routes
@@ -57,6 +46,20 @@ app.use("/", messagingRoutes); // Messaging routes
 app.use("/", rentalRoutes); // Rental routes
 app.use("/", imageRoutes); // Image upload routes
 app.use("/", rentalRequestsRoutes); // Rental requests routes
+app.use("/api", deliveryRatingRoutes); // Delivery and rating routes
+
+// STATIC FILES AFTER API ROUTES (so API routes take priority)
+// Serve static files from public directory (legacy HTML files)
+app.use("/legacy", express.static(path.join(__dirname, "public")));
+
+// Serve uploaded images
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// Serve React build files
+app.use(express.static(path.join(__dirname, "client/build")));
+
+// Serve React app's static files
+app.use(express.static("client/build"));
 
 // Debug endpoint to check environment
 app.get("/debug-env", (req, res) => {

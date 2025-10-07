@@ -9,8 +9,13 @@ import './Rentals.css';
 const ImageGallery = ({ images, title, category, getDefaultImage }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
-  const hasImages = images && images.length > 0;
-  const displayImages = hasImages ? images : [getDefaultImage(category)];
+  // Check if images exist and are valid (not empty strings)
+  const validImages = images && Array.isArray(images) 
+    ? images.filter(img => img && typeof img === 'string' && img.trim() !== '') 
+    : [];
+  
+  const hasImages = validImages.length > 0;
+  const displayImages = hasImages ? validImages : [getDefaultImage(category)];
   const currentImage = displayImages[currentImageIndex];
 
   const nextImage = () => {
@@ -30,6 +35,7 @@ const ImageGallery = ({ images, title, category, getDefaultImage }) => {
           alt={`${title} - View ${currentImageIndex + 1}`}
           className="main-image"
           onError={(e) => {
+            console.log('Main image failed to load:', currentImage);
             e.target.src = getDefaultImage(category);
           }}
         />
@@ -143,6 +149,7 @@ const RentalDetail = () => {
   const { id } = useParams();
   const [listing, setListing] = useState(null);
   const [ownerRating, setOwnerRating] = useState(null);
+  const [deliveryRatings, setDeliveryRatings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -205,6 +212,9 @@ const RentalDetail = () => {
       if (response.data.success) {
         setListing(response.data.listing);
         setOwnerRating(response.data.owner_rating);
+        
+        // Fetch delivery ratings
+        fetchDeliveryRatings();
       } else {
         setError(response.data.message || 'Failed to load rental details');
       }
@@ -213,6 +223,17 @@ const RentalDetail = () => {
       setError(err.response?.data?.message || 'Failed to load rental details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDeliveryRatings = async () => {
+    try {
+      const response = await axios.get(`/api/listings/${id}/delivery-ratings`);
+      if (response.data.success) {
+        setDeliveryRatings(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching delivery ratings:', error);
     }
   };
 
@@ -524,6 +545,102 @@ const RentalDetail = () => {
                       )}
                       <div className="review-date">
                         {new Date(review.created_at).toLocaleDateString('en-IN')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Delivery Ratings */}
+            {deliveryRatings && deliveryRatings.summary.totalRatings > 0 && (
+              <div className="delivery-ratings-section">
+                <h3>🚚 Delivery Ratings</h3>
+                
+                {/* Ratings Summary */}
+                <div className="delivery-rating-summary">
+                  <div className="overall-rating">
+                    <div className="rating-value">{deliveryRatings.summary.overallAvgRating}</div>
+                    <div className="rating-stars">
+                      {renderStars(Math.round(parseFloat(deliveryRatings.summary.overallAvgRating)))}
+                    </div>
+                    <div className="rating-count">{deliveryRatings.summary.totalRatings} deliveries</div>
+                  </div>
+                  
+                  <div className="rating-breakdown">
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Delivery Speed</span>
+                      <div className="breakdown-bar">
+                        <div 
+                          className="breakdown-fill" 
+                          style={{width: `${(deliveryRatings.summary.avgDeliveryRating / 5) * 100}%`}}
+                        ></div>
+                      </div>
+                      <span className="breakdown-value">{deliveryRatings.summary.avgDeliveryRating}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Item Condition</span>
+                      <div className="breakdown-bar">
+                        <div 
+                          className="breakdown-fill" 
+                          style={{width: `${(deliveryRatings.summary.avgItemConditionRating / 5) * 100}%`}}
+                        ></div>
+                      </div>
+                      <span className="breakdown-value">{deliveryRatings.summary.avgItemConditionRating}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Communication</span>
+                      <div className="breakdown-bar">
+                        <div 
+                          className="breakdown-fill" 
+                          style={{width: `${(deliveryRatings.summary.avgCommunicationRating / 5) * 100}%`}}
+                        ></div>
+                      </div>
+                      <span className="breakdown-value">{deliveryRatings.summary.avgCommunicationRating}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Individual Ratings */}
+                <div className="delivery-ratings-list">
+                  {deliveryRatings.ratings.slice(0, 5).map((rating) => (
+                    <div key={rating.id} className="delivery-rating-item">
+                      <div className="rating-header">
+                        <img 
+                          src={rating.rater_picture || 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'}
+                          alt={rating.rater_name}
+                          className="rater-avatar"
+                        />
+                        <div className="rater-info">
+                          <div className="rater-name">{rating.rater_name}</div>
+                          <div className="rating-stars-small">
+                            {renderStars(Math.round(rating.avg_rating))}
+                            <span className="rating-value-small">{rating.avg_rating.toFixed(1)}</span>
+                          </div>
+                        </div>
+                        <div className="rating-date">
+                          {new Date(rating.created_at).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                      
+                      {rating.comment && (
+                        <p className="rating-comment">{rating.comment}</p>
+                      )}
+                      
+                      <div className="rating-details">
+                        <span className="rating-detail-item">
+                          🚀 Delivery: {rating.delivery_rating}/5
+                        </span>
+                        <span className="rating-detail-item">
+                          📦 Condition: {rating.item_condition_rating}/5
+                        </span>
+                        <span className="rating-detail-item">
+                          💬 Communication: {rating.communication_rating}/5
+                        </span>
                       </div>
                     </div>
                   ))}

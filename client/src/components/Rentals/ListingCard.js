@@ -126,6 +126,22 @@ const ListingCard = ({ listing }) => {
           </div>
         </div>
         
+        {/* Delivery Rating Badge */}
+        {listing.delivery_rating_count > 0 && (
+          <div className="delivery-rating-badge">
+            <span className="delivery-icon">🚚</span>
+            <span className="rating-stars">
+              {renderStars(Math.round((parseFloat(listing.avg_delivery_rating) + parseFloat(listing.avg_item_condition_rating) + parseFloat(listing.avg_communication_rating)) / 3))}
+            </span>
+            <span className="rating-value">
+              {((parseFloat(listing.avg_delivery_rating) + parseFloat(listing.avg_item_condition_rating) + parseFloat(listing.avg_communication_rating)) / 3).toFixed(1)}
+            </span>
+            <span className="rating-count">
+              ({listing.delivery_rating_count} deliveries)
+            </span>
+          </div>
+        )}
+        
         {listing.description && (
           <div className="listing-description" style={{
             fontSize: '14px',

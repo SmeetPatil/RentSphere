@@ -344,7 +344,7 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
 
         // First, verify that the request belongs to the current user and is in approved status
         const verifyQuery = `
-            SELECT rr.*, l.title as listing_title
+            SELECT rr.*, l.title as listing_title, l.id as listing_id
             FROM rental_requests rr
             JOIN listings l ON rr.listing_id = l.id
             WHERE rr.id = $1 AND rr.renter_user_id = $2 AND rr.renter_user_type = $3 AND rr.status = 'approved'
@@ -359,6 +359,11 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
             });
         }
 
+        const rentalRequest = verifyResult.rows[0];
+        
+        // Calculate platform fee (10% of total price)
+        const platformFee = (rentalRequest.total_price * 0.10).toFixed(2);
+        
         // Update the rental request status to 'paid' and add payment information
         const updateQuery = `
             UPDATE rental_requests 
@@ -367,8 +372,9 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
                 payment_method = $2,
                 transaction_id = $3,
                 payment_date = $4,
+                platform_fee = $5,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $5
+            WHERE id = $6
             RETURNING *
         `;
 
@@ -377,6 +383,7 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
             payment_method,
             transaction_id,
             payment_date || new Date().toISOString(),
+            platformFee,
             requestId
         ]);
 
@@ -386,6 +393,12 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
                 message: 'Failed to update payment status'
             });
         }
+
+        // Deactivate the rental listing once payment is complete
+        await pool.query(
+            'UPDATE listings SET is_available = false, rental_status = \'rented\' WHERE id = $1',
+            [rentalRequest.listing_id]
+        );
 
         const updatedRequest = updateResult.rows[0];
 

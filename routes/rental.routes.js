@@ -116,11 +116,17 @@ router.get('/api/rentals', isLoggedIn, async (req, res) => {
                     WHEN l.user_type = 'phone' THEN pu.phone
                 END as owner_contact,
                 COALESCE(AVG(ur.rating), 0) as owner_rating,
-                COUNT(ur.rating) as rating_count
+                COUNT(DISTINCT ur.id) as rating_count,
+                COALESCE(AVG(dr.delivery_rating), 0) as avg_delivery_rating,
+                COALESCE(AVG(dr.item_condition_rating), 0) as avg_item_condition_rating,
+                COALESCE(AVG(dr.communication_rating), 0) as avg_communication_rating,
+                COUNT(DISTINCT dr.id) as delivery_rating_count
             FROM listings l
             LEFT JOIN users u ON l.user_id = u.id AND l.user_type = 'google'
             LEFT JOIN phone_users pu ON l.user_id = pu.id AND l.user_type = 'phone'
             LEFT JOIN user_ratings ur ON l.user_id = ur.rated_user_id AND l.user_type = ur.rated_user_type
+            LEFT JOIN rental_requests rr ON rr.listing_id = l.id
+            LEFT JOIN delivery_ratings dr ON dr.request_id = rr.id
             WHERE l.is_available = true
         `;
         
