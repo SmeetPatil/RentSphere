@@ -7,6 +7,7 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
     const [trackingData, setTrackingData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [confirming, setConfirming] = useState(false);
 
     useEffect(() => {
         const fetchTrackingData = async () => {
@@ -29,6 +30,32 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
         return () => clearInterval(interval);
     }, [requestId]);
 
+    const handleConfirmDelivery = async () => {
+        try {
+            setConfirming(true);
+            await axios.post(`/api/confirm-delivery/${requestId}`);
+            
+            // Update local state to reflect confirmation
+            setTrackingData(prev => ({
+                ...prev,
+                request: {
+                    ...prev.request,
+                    delivery_confirmed: true
+                }
+            }));
+            
+            // Close the modal and trigger parent refresh
+            setTimeout(() => {
+                onClose();
+            }, 1000);
+        } catch (error) {
+            console.error('Error confirming delivery:', error);
+            alert('Failed to confirm delivery. Please try again.');
+        } finally {
+            setConfirming(false);
+        }
+    };
+
     const getStatusIcon = (status) => {
         switch(status) {
             case 'shipped': return '📦';
@@ -49,12 +76,19 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
 
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return 'Pending';
+        
+        // Convert UTC to IST (UTC+5:30)
         const date = new Date(timestamp);
-        return date.toLocaleString('en-IN', { 
+        const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
+        const istDate = new Date(date.getTime() + istOffset);
+        
+        return istDate.toLocaleString('en-IN', { 
             month: 'short', 
             day: 'numeric', 
             hour: '2-digit', 
-            minute: '2-digit' 
+            minute: '2-digit',
+            hour12: true,
+            timeZone: 'UTC' // Display the adjusted time as-is
         });
     };
 
@@ -65,35 +99,17 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
         
         if (status === 'delivered') return null;
         
-        const shippedAt = isReturn ? request.return_shipped_at : request.delivery_shipped_at;
-        if (!shippedAt) return null;
+        // Use expected delivery time from database
+        const expectedDeliveredAt = isReturn ? request.expected_return_delivered_at : request.expected_delivered_at;
+        if (!expectedDeliveredAt) return null;
         
-        const shippedTime = new Date(shippedAt);
+        const expectedTime = new Date(expectedDeliveredAt);
         const now = new Date();
-        const elapsed = (now - shippedTime) / (1000 * 60); // minutes
+        const remainingMinutes = Math.max(0, (expectedTime - now) / (1000 * 60));
         
-        // Calculate estimated total time based on distance (using cost as proxy)
-        const deliveryCost = parseFloat(isReturn ? request.return_delivery_cost : request.delivery_cost) || 10;
-        
-        // Formula: 3 hours base + (cost/distance * 20 minutes)
-        // Heavy items get 10-20% extra time
-        let estimatedTotalMinutes = 180 + (deliveryCost * 20);
-        
-        // Check if heavy/sensitive item
-        const category = request.category || '';
-        const heavyItems = ['tv', 'drone', 'speaker', 'camera', 'laptop', 'gaming'];
-        const isHeavy = heavyItems.some(item => category.toLowerCase().includes(item));
-        
-        if (isHeavy) {
-            estimatedTotalMinutes *= 1.15; // 15% extra for heavy items
-        }
-        
-        // Enforce 3-12 hour limits
-        estimatedTotalMinutes = Math.max(180, Math.min(720, estimatedTotalMinutes));
-        
-        const remainingMinutes = Math.max(0, estimatedTotalMinutes - elapsed);
-        
-        if (remainingMinutes < 60) {
+        if (remainingMinutes < 1) {
+            return 'Arriving any moment now';
+        } else if (remainingMinutes < 60) {
             return `Arriving soon (within ${Math.ceil(remainingMinutes)} minutes)`;
         } else {
             const hours = Math.floor(remainingMinutes / 60);
@@ -140,7 +156,7 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
         );
     }
 
-    const { request, events } = trackingData;
+    const { request } = trackingData;
     const currentStatus = isReturn ? request.return_delivery_status : request.delivery_status;
     const estimatedTime = calculateEstimatedTime(request);
 
@@ -236,17 +252,23 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Detailed Events */}
-                    {events && events.length > 0 && (
-                        <div className="events-section">
-                            <h4>📋 Detailed Updates</h4>
-                            <div className="events-list">
-                                {events.map((event, index) => (
-                                    <div key={index} className="event-item">
-                                        <span className="event-time">{formatTimestamp(event.event_time)}</span>
-                                        <span className="event-desc">{event.description}</span>
-                                    </div>
-                                ))}
+                    {/* Expected Delivery Time */}
+                    {currentStatus !== 'delivered' && (
+                        <div className="expected-delivery-section">
+                            <h4>� Expected Delivery</h4>
+                            <div className="expected-delivery-info">
+                                <div className="expected-time-large">
+                                    {isReturn ? (
+                                        request.expected_return_delivered_at ? 
+                                            formatTimestamp(request.expected_return_delivered_at) :
+                                            'Pending'
+                                    ) : (
+                                        formatTimestamp(request.expected_delivered_at)
+                                    )}
+                                </div>
+                                <p className="expected-note">
+                                    Estimated delivery time based on distance and item type
+                                </p>
                             </div>
                         </div>
                     )}
@@ -262,9 +284,30 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
 
                 {/* Footer Actions */}
                 <div className="modal-footer">
-                    <button className="btn-primary full-width" onClick={onClose}>
-                        Close Tracking
-                    </button>
+                    {currentStatus === 'delivered' && !request.delivery_confirmed ? (
+                        <div className="delivery-confirmation">
+                            <div className="confirmation-message">
+                                <p className="confirmation-text">
+                                    <strong>📦 Delivery Completed!</strong><br/>
+                                    Please confirm that you have received the item to proceed with rating.
+                                </p>
+                            </div>
+                            <button 
+                                className="btn-success full-width" 
+                                onClick={handleConfirmDelivery}
+                                disabled={confirming}
+                            >
+                                {confirming ? 'Confirming...' : '✅ Confirm Delivery Received'}
+                            </button>
+                            <button className="btn-secondary full-width" onClick={onClose} style={{ marginTop: '10px' }}>
+                                Close Tracking
+                            </button>
+                        </div>
+                    ) : (
+                        <button className="btn-primary full-width" onClick={onClose}>
+                            Close Tracking
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

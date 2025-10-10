@@ -89,9 +89,10 @@
 
 .estimated-time {
     margin: 0;
-    color: black;
-    font-size: 0.875rem;
-    font-weight: 600;
+    color: #000000 !important;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Info Sections */
@@ -224,6 +225,45 @@
 }
 
 /* Events Section */
+.expected-delivery-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.expected-delivery-section h4 {
+    margin: 0 0 16px 0;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.expected-delivery-info {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.expected-time-large {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.expected-note {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+/* Old Events Section - Keep for backwards compatibility but unused now */
 .events-section {
     background: #f9fafb;
     border-radius: 8px;
@@ -292,6 +332,30 @@
     background: #f9fafb;
 }
 
+.delivery-confirmation {
+    width: 100%;
+}
+
+.confirmation-message {
+    background: #ecfdf5;
+    border: 1px solid #10b981;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.confirmation-text {
+    margin: 0;
+    color: #065f46;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.confirmation-text strong {
+    font-size: 1rem;
+    color: #047857;
+}
+
 .btn-primary {
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     color: white;
@@ -313,6 +377,32 @@
     width: 100%;
 }
 
+.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-success:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.btn-success:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-success.full-width {
+    width: 100%;
+}
+
 .btn-secondary {
     background: #f3f4f6;
     color: #374151;
@@ -327,6 +417,10 @@
 
 .btn-secondary:hover {
     background: #e5e7eb;
+}
+
+.btn-secondary.full-width {
+    width: 100%;
 }
 
 /* Responsive */

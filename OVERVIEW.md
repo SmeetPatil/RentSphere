@@ -13,8 +13,12 @@
 - [Frontend Components](#frontend-components)
 - [Google Drive Integration](#google-drive-integration)
 - [Troubleshooting](#troubleshooting)
+- [Testing Guide](#testing-guide)
+- [License](#license)
 
 ---
+
+<a id="architecture"></a>
 
 ## Architecture
 
@@ -30,7 +34,7 @@ RentSphere is a full-stack web application built with:
 
 ### Request Flow
 
-```text
+````text
 
 User → React App → Axios → Express API → PostgreSQL/Google Drive → Response
 
@@ -44,6 +48,8 @@ User → React App → Axios → Express API → PostgreSQL/Google Drive → Res
 - **Stateless Auth**: Session-based authentication with secure cookies
 
 ---
+
+<a id="database-schema"></a>
 
 ## Database Schema
 
@@ -107,7 +113,7 @@ CREATE TABLE rental_requests (
     total_amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(20) DEFAULT 'pending', -- pending, approved, denied, paid, returned
     message TEXT,
-    
+
     -- Delivery fields
     delivery_option VARCHAR(10), -- 'pickup' or 'delivery'
     delivery_cost DECIMAL(10, 2),
@@ -118,16 +124,16 @@ CREATE TABLE rental_requests (
     delivery_status VARCHAR(20), -- shipped, en_route, delivered
     expected_en_route_at TIMESTAMP,
     expected_delivered_at TIMESTAMP,
-    
+
     -- Payment tracking
     payment_received BOOLEAN DEFAULT FALSE,
     payment_date TIMESTAMP,
     platform_fee DECIMAL(10, 2),
-    
+
     -- Rating tracking
     delivery_rated BOOLEAN DEFAULT FALSE,
     owner_rated BOOLEAN DEFAULT FALSE,
-    
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -212,6 +218,8 @@ CREATE TABLE messages (
 ```text
 
 ---
+
+<a id="api-reference"></a>
 
 ## API Reference
 
@@ -641,6 +649,8 @@ Send a message in a conversation.
 
 ---
 
+<a id="delivery-system"></a>
+
 ## Delivery System
 
 ### Overview
@@ -698,7 +708,11 @@ const expectedDeliveredAt = new Date(Date.now() + deliveryMinutes * 60000);
 
 ---
 
+<a id="rating-system"></a>
+
 ## Rating System
+
+### Overview
 
 ### Dual Rating System
 
@@ -751,7 +765,11 @@ Submitted by **renter** about the owner's overall service.
 
 ---
 
+<a id="authentication"></a>
+
 ## Authentication
+
+### Overview
 
 ### Session-Based Authentication
 
@@ -772,9 +790,7 @@ function requireAuth(req, res, next) {
     return next();
   }
   res.status(401).json({ error: 'Unauthorized' });
-}
-
-```text
+````
 
 **Protected Routes:**
 
@@ -784,6 +800,8 @@ function requireAuth(req, res, next) {
 - `/api/upload`
 
 ---
+
+<a id="frontend-components"></a>
 
 ## Frontend Components
 
@@ -836,14 +854,14 @@ function requireAuth(req, res, next) {
 
 **Fixed Approach (React Fragments):**
 
-```jsx
+````jsx
 
 return (
   <>
     <div className="rentals-page">
       {/* Page content */}
     </div>
-    
+
     {/* Modals rendered at document root level */}
     {showPaymentModal && <PaymentModal />}
     {showTrackingModal && <DeliveryTracking />}
@@ -852,11 +870,17 @@ return (
 
 ```text
 
+```text
+
 This ensures modals render over the entire page including navbar.
 
 ---
 
+<a id="google-drive-integration"></a>
+
 ## Google Drive Integration
+
+### Overview
 
 ### OAuth2 Setup
 
@@ -914,7 +938,11 @@ RentSphere Images/
 
 ---
 
+<a id="troubleshooting"></a>
+
 ## Troubleshooting
+
+### Common Issues
 
 ### Common Issues
 
@@ -1038,6 +1066,8 @@ npm run build
 
 ---
 
+<a id="testing-guide"></a>
+
 ## Testing Guide
 
 ### Testing Rental Flow (Renter)
@@ -1097,11 +1127,14 @@ npm run build
 
 ---
 
+<a id="license"></a>
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file
 
 ---
 
-**Last Updated:** December 2024  
+**Last Updated:** December 2024
 **Version:** 1.0.0
+````

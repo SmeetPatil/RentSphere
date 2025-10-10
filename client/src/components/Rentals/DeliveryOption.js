@@ -3,7 +3,7 @@ import axios from 'axios';
 import './RentalRequest.css';
 import './DeliveryOption.css';
 
-const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
+const DeliveryOption = ({ request, isReturn = false, onDeliveryChosen, onClose }) => {
     const [deliveryOption, setDeliveryOption] = useState('pickup');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [deliveryLat, setDeliveryLat] = useState(null);
@@ -14,6 +14,70 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
     const [loading, setLoading] = useState(false);
     const [calculating, setCalculating] = useState(false);
     const [error, setError] = useState('');
+    const [lateFeeInfo, setLateFeeInfo] = useState(null);
+
+    // Calculate late fee info for returns
+    React.useEffect(() => {
+        if (isReturn && request?.end_date) {
+            try {
+                const endDate = new Date(request.end_date);
+                const now = new Date();
+                const hoursPastEnd = (now - endDate) / (1000 * 60 * 60);
+                const hoursRemaining = 36 - hoursPastEnd;
+
+                if (hoursRemaining < 0) {
+                    // Calculate late fee
+                    const hoursLate = Math.abs(hoursRemaining);
+                    const dailyRate = parseFloat(request.listing_price_per_day || request.price_per_day || 0);
+
+                    let lateFee = 0;
+                    let daysLate = 0;
+
+                    if (hoursLate <= 12) {
+                        // First 12 hours after 36h: half day
+                        lateFee = dailyRate * 0.5;
+                        daysLate = 0.5;
+                    } else {
+                        // After 48h total
+                        const fullDaysLate = Math.floor((hoursLate - 12) / 24);
+                        const remainingHours = (hoursLate - 12) % 24;
+
+                        lateFee = dailyRate * 0.5; // First half day
+                        daysLate = 0.5;
+
+                        lateFee += fullDaysLate * dailyRate;
+                        daysLate += fullDaysLate;
+
+                        if (remainingHours > 0) {
+                            lateFee += dailyRate;
+                            daysLate += 1;
+                        }
+                    }
+
+                    // Ensure all values are numbers before calling toFixed
+                    const safeFee = isNaN(lateFee) ? 0 : Number(lateFee);
+                    const safeHours = isNaN(hoursLate) ? 0 : Number(hoursLate);
+                    const safeDays = isNaN(daysLate) ? 0 : Number(daysLate);
+
+                    setLateFeeInfo({
+                        isLate: true,
+                        lateFee: parseFloat(safeFee.toFixed(2)),
+                        hoursLate: parseFloat(safeHours.toFixed(2)),
+                        daysLate: parseFloat(safeDays.toFixed(2))
+                    });
+                } else {
+                    const safeRemaining = isNaN(hoursRemaining) ? 0 : Number(hoursRemaining);
+                    setLateFeeInfo({
+                        isLate: false,
+                        hoursRemaining: parseFloat(safeRemaining.toFixed(2))
+                    });
+                }
+            } catch (error) {
+                console.error('Error calculating late fee:', error);
+                setLateFeeInfo(null);
+            }
+        }
+    }, [isReturn, request?.end_date, request?.listing_price_per_day, request?.price_per_day]);
 
     // Get coordinates from address using geocoding via backend
     const geocodeAddress = async (address) => {
@@ -22,7 +86,7 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
             const response = await axios.post('/api/geocode-address', {
                 address: address
             });
-            
+
             if (response.data && response.data.lat && response.data.lon) {
                 return {
                     lat: response.data.lat,
@@ -49,7 +113,7 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
             console.log('Geocoding address:', deliveryAddress);
             // Get coordinates for delivery address
             const coords = await geocodeAddress(deliveryAddress);
-            
+
             if (!coords) {
                 setError('Unable to find address. Please enter a valid address.');
                 setCalculating(false);
@@ -82,36 +146,52 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
     };
 
     const handleSubmit = async () => {
-        if (deliveryOption === 'delivery' && !deliveryAddress.trim()) {
-            setError('Please enter a delivery address');
-            return;
-        }
+        // Validation for initial delivery (not returns)
+        if (!isReturn) {
+            if (deliveryOption === 'delivery' && !deliveryAddress.trim()) {
+                setError('Please enter a delivery address');
+                return;
+            }
 
-        if (deliveryOption === 'delivery' && (!deliveryLat || !deliveryLon)) {
-            setError('Please calculate delivery cost first');
-            return;
+            if (deliveryOption === 'delivery' && (!deliveryLat || !deliveryLon)) {
+                setError('Please calculate delivery cost first');
+                return;
+            }
         }
 
         setLoading(true);
         setError('');
 
         try {
-            const response = await axios.post('/api/choose-delivery-option', {
-                requestId: request.id,
-                deliveryOption: deliveryOption,
-                deliveryAddress: deliveryOption === 'delivery' ? deliveryAddress : null,
-                deliveryCost: deliveryOption === 'delivery' ? deliveryCost : 0,
-                distance: deliveryOption === 'delivery' ? distance : 0,
-                deliveryLat: deliveryOption === 'delivery' ? deliveryLat : null,
-                deliveryLon: deliveryOption === 'delivery' ? deliveryLon : null
-            });
+            if (isReturn) {
+                // For returns, backend fetches listing coordinates and calculates everything
+                const response = await axios.post('/api/initiate-return', {
+                    requestId: request.id,
+                    returnOption: deliveryOption
+                });
 
-            if (response.data.requiresPayment) {
-                // Navigate to delivery payment
-                onDeliveryChosen(deliveryOption, deliveryCost, true);
+                if (response.data.requiresPayment) {
+                    onDeliveryChosen(deliveryOption, response.data.deliveryCost, response.data);
+                } else {
+                    onDeliveryChosen(deliveryOption, 0, response.data);
+                }
             } else {
-                // Pickup - no payment needed, just wait for confirmation
-                onDeliveryChosen(deliveryOption, 0, false);
+                // For initial delivery, send address and coordinates
+                const response = await axios.post('/api/choose-delivery-option', {
+                    requestId: request.id,
+                    deliveryOption: deliveryOption,
+                    deliveryAddress: deliveryOption === 'delivery' ? deliveryAddress : null,
+                    deliveryCost: deliveryOption === 'delivery' ? deliveryCost : 0,
+                    distance: deliveryOption === 'delivery' ? distance : 0,
+                    deliveryLat: deliveryOption === 'delivery' ? deliveryLat : null,
+                    deliveryLon: deliveryOption === 'delivery' ? deliveryLon : null
+                });
+
+                if (response.data.requiresPayment) {
+                    onDeliveryChosen(deliveryOption, deliveryCost, response.data);
+                } else {
+                    onDeliveryChosen(deliveryOption, 0, response.data);
+                }
             }
         } catch (error) {
             console.error('Error choosing delivery option:', error);
@@ -132,8 +212,36 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                 {/* Listing Summary */}
                 <div className="listing-summary">
                     <h3>{request.listing_title}</h3>
-                    <p className="subtitle">Select how you'd like to receive your rental</p>
+                    <p className="subtitle">{isReturn ? 'Select return method' : 'Select how you\'d like to receive your rental'}</p>
                 </div>
+
+                {/* Late Fee Warning for Returns */}
+                {isReturn && lateFeeInfo && (
+                    <div className={`late-fee-warning ${lateFeeInfo.isLate ? 'overdue' : 'on-time'}`}>
+                        {lateFeeInfo.isLate ? (
+                            <>
+                                <div className="warning-icon">⚠️</div>
+                                <div className="warning-content">
+                                    <h4>Late Return - Fees Apply</h4>
+                                    <p>You are <strong>{Math.floor(lateFeeInfo.hoursLate)} hours</strong> past the 36-hour return window.</p>
+                                    <div className="late-fee-amount">
+                                        Late Fee: <strong>₹{lateFeeInfo.lateFee}</strong> ({lateFeeInfo.daysLate} day{lateFeeInfo.daysLate !== 1 ? 's' : ''})
+                                    </div>
+                                    <p className="fee-note">This fee will be added to your final transaction.</p>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="success-icon">✅</div>
+                                <div className="warning-content">
+                                    <h4>On Time - No Late Fees</h4>
+                                    <p>You have <strong>{Math.floor(lateFeeInfo.hoursRemaining)} hours</strong> remaining in your return window.</p>
+                                    <p className="fee-note">Complete return within 36 hours of rental end to avoid late fees.</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* Error Message */}
                 {error && (
@@ -148,7 +256,7 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                     {/* Delivery Options Grid */}
                     <div className="delivery-options-grid">
                         {/* Pickup Option */}
-                        <div 
+                        <div
                             className={`delivery-choice-card ${deliveryOption === 'pickup' ? 'selected' : ''}`}
                             onClick={() => setDeliveryOption('pickup')}
                         >
@@ -164,7 +272,7 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                         </div>
 
                         {/* Delivery Option */}
-                        <div 
+                        <div
                             className={`delivery-choice-card ${deliveryOption === 'delivery' ? 'selected' : ''}`}
                             onClick={() => setDeliveryOption('delivery')}
                         >
@@ -185,7 +293,7 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                     </div>
 
                     {/* Delivery Address Section */}
-                    {deliveryOption === 'delivery' && (
+                    {deliveryOption === 'delivery' && !isReturn && (
                         <div className="delivery-address-form">
                             <h4>Delivery Address</h4>
                             <div className="form-field">
@@ -202,13 +310,13 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                                         setDeliveryLat(null);
                                         setDeliveryLon(null);
                                     }}
-                                    placeholder="Enter your complete delivery address&#10;(House/Flat, Street, Area, City, Pincode)"
+                                    placeholder="Enter your complete delivery address\n(House/Flat, Street, Area, City, Pincode)"
                                     rows="3"
                                     required
                                 />
                             </div>
 
-                            <button 
+                            <button
                                 className="btn-calculate"
                                 onClick={calculateDeliveryCost}
                                 disabled={calculating || !deliveryAddress.trim()}
@@ -266,10 +374,10 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                     <button className="btn-secondary" onClick={onClose} disabled={loading}>
                         Cancel
                     </button>
-                    <button 
-                        className="btn-primary" 
+                    <button
+                        className="btn-primary"
                         onClick={handleSubmit}
-                        disabled={loading || (deliveryOption === 'delivery' && (!deliveryLat || !deliveryLon))}
+                        disabled={loading || (!isReturn && deliveryOption === 'delivery' && (!deliveryLat || !deliveryLon))}
                     >
                         {loading ? (
                             <>
@@ -277,9 +385,15 @@ const DeliveryOption = ({ request, onDeliveryChosen, onClose }) => {
                                 Processing...
                             </>
                         ) : (
-                            deliveryOption === 'delivery' ? 
-                                `Proceed to Payment (₹${deliveryCost.toFixed(2)})` : 
-                                'Confirm Pickup'
+                            isReturn ? (
+                                deliveryOption === 'delivery' ?
+                                    'Initiate Return Delivery' :
+                                    'Confirm Return Pickup'
+                            ) : (
+                                deliveryOption === 'delivery' ?
+                                    `Proceed to Payment (₹${deliveryCost.toFixed(2)})` :
+                                    'Confirm Pickup'
+                            )
                         )}
                     </button>
                 </div>

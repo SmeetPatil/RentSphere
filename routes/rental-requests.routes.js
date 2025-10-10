@@ -23,11 +23,15 @@ router.post('/api/rental-requests', isLoggedIn, async (req, res) => {
         const end = new Date(endDate);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
+        
+        // Start date must be at least tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-        if (start < today) {
+        if (start < tomorrow) {
             return res.status(400).json({
                 success: false,
-                message: 'Start date cannot be in the past'
+                message: 'Start date must be at least tomorrow. You cannot rent for past or current dates.'
             });
         }
 
@@ -240,6 +244,8 @@ router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => 
             });
         }
 
+        const request = verifyResult.rows[0];
+        
         // Update request status and denial reason if applicable
         let updateQuery, updateParams;
         
@@ -252,6 +258,7 @@ router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => 
             `;
             updateParams = [status, denial_reason.trim(), requestId];
         } else {
+            // When approving, deactivate the listing immediately
             updateQuery = `
                 UPDATE rental_requests 
                 SET status = $1, updated_at = CURRENT_TIMESTAMP
@@ -262,15 +269,22 @@ router.patch('/api/rental-requests/:requestId', isLoggedIn, async (req, res) => 
         }
 
         const result = await pool.query(updateQuery, updateParams);
-
         const updatedRequest = result.rows[0];
+        
+        // If approved, deactivate the listing
+        if (status === 'approved') {
+            await pool.query(
+                'UPDATE listings SET is_available = false, rental_status = \'pending_payment\' WHERE id = $1',
+                [request.listing_id]
+            );
+        }
 
         res.json({
             success: true,
             message: `Rental request ${status} successfully`,
             request: {
                 ...updatedRequest,
-                listing_title: verifyResult.rows[0].listing_title
+                listing_title: request.listing_title
             }
         });
 
@@ -297,6 +311,9 @@ router.get('/api/my-rental-requests', isLoggedIn, async (req, res) => {
                 l.price_per_day as listing_price_per_day,
                 l.images as listing_images,
                 l.category as listing_category,
+                l.address as listing_address,
+                l.latitude as listing_latitude,
+                l.longitude as listing_longitude,
                 CASE 
                     WHEN l.user_type = 'google' THEN gu.name
                     WHEN l.user_type = 'phone' THEN pu.name
@@ -394,9 +411,9 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
             });
         }
 
-        // Deactivate the rental listing once payment is complete
+        // Update listing status to rented (it's already deactivated from approval)
         await pool.query(
-            'UPDATE listings SET is_available = false, rental_status = \'rented\' WHERE id = $1',
+            'UPDATE listings SET rental_status = \'rented\' WHERE id = $1',
             [rentalRequest.listing_id]
         );
 

@@ -51,11 +51,13 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
             // Validate dates
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
             const startDate = new Date(formData.startDate);
             const endDate = new Date(formData.endDate);
 
-            if (startDate < today) {
-                throw new Error('Start date cannot be in the past');
+            if (startDate < tomorrow) {
+                throw new Error('Start date must be at least tomorrow. You cannot rent for past or current dates.');
             }
 
             if (endDate <= startDate) {
@@ -99,7 +101,7 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
         }
     };
 
-    // Get minimum date (tomorrow)
+    // Get minimum date (tomorrow - cannot rent for today or past)
     const getMinDate = () => {
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);

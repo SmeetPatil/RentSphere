@@ -334,3 +334,75 @@
         width: 100%;
     }
 }
+
+
+/* Late Fee Warning */
+.late-fee-warning {
+    display: flex;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+}
+
+.late-fee-warning.overdue {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%);
+    border: 2px solid #ff6b6b;
+}
+
+.late-fee-warning.on-time {
+    background: linear-gradient(135deg, #f0fff4 0%, #e6ffed 100%);
+    border: 2px solid #51cf66;
+}
+
+.late-fee-warning .warning-icon,
+.late-fee-warning .success-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.late-fee-warning .warning-content {
+    flex: 1;
+}
+
+.late-fee-warning h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+}
+
+.late-fee-warning.overdue h4 {
+    color: #c92a2a;
+}
+
+.late-fee-warning.on-time h4 {
+    color: #2b8a3e;
+}
+
+.late-fee-warning p {
+    margin: 0 0 8px 0;
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
+.late-fee-amount {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 1.1rem;
+    color: #2d3748;
+}
+
+.late-fee-amount strong {
+    color: #c92a2a;
+    font-size: 1.3rem;
+}
+
+.fee-note {
+    font-size: 0.85rem !important;
+    color: #718096 !important;
+    font-style: italic;
+}

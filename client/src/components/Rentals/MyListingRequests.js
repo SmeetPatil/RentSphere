@@ -29,10 +29,8 @@ const MyListingRequests = () => {
                 
                 if (data.updatesProcessed > 0) {
                     console.log(`📦 ${data.updatesProcessed} deliveries updated:`, data.updates);
-                    // Refresh listings to show updated delivery status
                     await fetchMyListings();
                     
-                    // Show notification for updates
                     data.updates.forEach(update => {
                         showActionMessage('success', update.message);
                     });
@@ -40,9 +38,32 @@ const MyListingRequests = () => {
             } catch (error) {
                 console.error('Delivery simulation error:', error);
             }
-        }, 30000); // Check every 30 seconds
+        }, 30000);
         
-        return () => clearInterval(deliverySimulationInterval);
+        // Start automatic return delivery simulation polling
+        const returnSimulationInterval = setInterval(async () => {
+            try {
+                console.log('🔄 Running automatic return delivery simulation...');
+                const response = await fetch('/api/delivery/simulate-return-delivery-progress');
+                const data = await response.json();
+                
+                if (data.updatesProcessed > 0) {
+                    console.log(`📦 ${data.updatesProcessed} return deliveries updated:`, data.updates);
+                    await fetchMyListings();
+                    
+                    data.updates.forEach(update => {
+                        showActionMessage('success', update.message);
+                    });
+                }
+            } catch (error) {
+                console.error('Return delivery simulation error:', error);
+            }
+        }, 30000);
+        
+        return () => {
+            clearInterval(deliverySimulationInterval);
+            clearInterval(returnSimulationInterval);
+        };
     }, []);
 
     const showActionMessage = (type, message) => {
@@ -406,8 +427,8 @@ const MyListingRequests = () => {
                 {/* Smart delivery status buttons */}
                 {request.status === 'paid' && request.delivery_option === 'delivery' && request.delivery_paid && (
                     <div className="request-actions">
-                        {/* Show Track Delivery only if not delivered */}
-                        {request.delivery_status !== 'delivered' && (
+                        {/* Show Track Delivery until renter confirms receipt */}
+                        {!request.delivery_confirmed && (
                             <button
                                 onClick={() => setTrackingModal({ visible: true, requestId: request.id, isReturn: false })}
                                 className="btn btn-message"
@@ -416,8 +437,8 @@ const MyListingRequests = () => {
                             </button>
                         )}
                         
-                        {/* Show Rate Delivery when delivered */}
-                        {request.delivery_status === 'delivered' && !request.delivery_rated && (
+                        {/* Show Rate Delivery when renter confirms delivery */}
+                        {request.delivery_confirmed && !request.delivery_rated && (
                             <button
                                 onClick={() => setRatingModal({ 
                                     visible: true, 
@@ -431,8 +452,8 @@ const MyListingRequests = () => {
                             </button>
                         )}
                         
-                        {/* Show Rate Owner button when delivered */}
-                        {request.delivery_status === 'delivered' && !request.owner_rated && (
+                        {/* Show Rate Owner button when renter confirms delivery */}
+                        {request.delivery_confirmed && !request.owner_rated && (
                             <button
                                 onClick={() => setOwnerRatingModal({ 
                                     visible: true, 
@@ -448,7 +469,7 @@ const MyListingRequests = () => {
                         )}
                         
                         {/* Show completed status when both are rated */}
-                        {request.delivery_status === 'delivered' && request.delivery_rated && request.owner_rated && (
+                        {request.delivery_confirmed && request.delivery_rated && request.owner_rated && (
                             <div className="delivery-completed">
                                 <span className="status-badge delivered">✅ Delivery Completed & Rated</span>
                             </div>

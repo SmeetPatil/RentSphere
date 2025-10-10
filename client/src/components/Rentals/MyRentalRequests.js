@@ -27,6 +27,7 @@ const MyRentalRequests = () => {
     const [trackingModal, setTrackingModal] = useState({ visible: false, requestId: null });
     const [ratingModal, setRatingModal] = useState({ visible: false, request: null });
     const [returnModal, setReturnModal] = useState({ visible: false, request: null });
+    const [returnPaymentModal, setReturnPaymentModal] = useState({ visible: false, request: null, cost: 0, lateFeeInfo: null });
     const [actionMessage, setActionMessage] = useState({ type: '', message: '', visible: false });
 
     useEffect(() => {
@@ -63,7 +64,8 @@ const MyRentalRequests = () => {
             pending: { class: 'status-pending', text: 'Pending Review' },
             approved: { class: 'status-approved', text: 'Approved' },
             paid: { class: 'status-paid', text: 'Paid' },
-            denied: { class: 'status-denied', text: 'Denied' }
+            denied: { class: 'status-denied', text: 'Denied' },
+            expired: { class: 'status-expired', text: 'Expired' }
         };
 
         const config = statusConfig[status] || { class: 'status-unknown', text: status };
@@ -99,6 +101,10 @@ const MyRentalRequests = () => {
     };
 
     const filterRequestsByStatus = (status) => {
+        if (status === 'denied') {
+            // Combine denied and expired in the denied tab
+            return requests.filter(request => request.status === 'denied' || request.status === 'expired');
+        }
         return requests.filter(request => request.status === status);
     };
 
@@ -107,21 +113,21 @@ const MyRentalRequests = () => {
             pending: filterRequestsByStatus('pending').length,
             approved: filterRequestsByStatus('approved').length,
             paid: filterRequestsByStatus('paid').length,
-            denied: filterRequestsByStatus('denied').length
+            denied: requests.filter(r => r.status === 'denied' || r.status === 'expired').length
         };
     };
 
     const renderTabContent = () => {
         const filteredRequests = filterRequestsByStatus(activeTab);
-        
+
         if (filteredRequests.length === 0) {
             const emptyMessages = {
                 pending: "No pending requests. Your requests will appear here while waiting for approval.",
                 approved: "No approved requests yet. Approved requests will show here with payment options.",
                 paid: "No paid requests yet. Completed payments will be shown here with receipts.",
-                denied: "No denied requests. Requests that were declined will appear here with reasons."
+                denied: "No denied or expired requests. Requests that were declined or expired will appear here with reasons."
             };
-            
+
             return (
                 <div className="empty-state">
                     <div className="empty-icon">
@@ -156,7 +162,7 @@ const MyRentalRequests = () => {
                         <div className="request-content">
                             <h3 className="request-title">{request.listing_title}</h3>
                             <p className="request-owner">Owner: {request.owner_name}</p>
-                            
+
                             <div className="request-dates">
                                 <div className="date-range">
                                     <span className="date-label">Duration:</span>
@@ -183,9 +189,9 @@ const MyRentalRequests = () => {
                                 </div>
                             )}
 
-                            {request.status === 'denied' && request.denial_reason && (
+                            {(request.status === 'denied' || request.status === 'expired') && request.denial_reason && (
                                 <div className="denial-reason">
-                                    <span className="denial-label">Reason for denial:</span>
+                                    <span className="denial-label">{request.status === 'expired' ? 'Expiry reason:' : 'Reason for denial:'}</span>
                                     <p>"{request.denial_reason}"</p>
                                 </div>
                             )}
@@ -197,13 +203,13 @@ const MyRentalRequests = () => {
                             </div>
 
                             <div className="request-actions">
-                                <Link 
+                                <Link
                                     to={`/rental/${request.listing_id}`}
                                     className="view-listing-btn"
                                 >
                                     View Listing
                                 </Link>
-                                
+
                                 {/* Payment flow */}
                                 {request.status === 'approved' && !request.payment_status && (
                                     <button
@@ -213,7 +219,7 @@ const MyRentalRequests = () => {
                                         Pay Now
                                     </button>
                                 )}
-                                
+
                                 {/* Delivery option selection after payment */}
                                 {request.status === 'paid' && !request.delivery_option && (
                                     <button
@@ -223,7 +229,7 @@ const MyRentalRequests = () => {
                                         🚚 Choose Delivery Method
                                     </button>
                                 )}
-                                
+
                                 {/* Delivery payment for delivery option */}
                                 {request.status === 'paid' && request.delivery_option === 'delivery' && !request.delivery_paid && (
                                     <button
@@ -233,7 +239,7 @@ const MyRentalRequests = () => {
                                         💳 Pay Delivery (₹{request.delivery_cost})
                                     </button>
                                 )}
-                                
+
                                 {/* Pickup confirmation for renter */}
                                 {request.status === 'paid' && request.delivery_option === 'pickup' && !request.pickup_confirmed_by_renter && (
                                     <button
@@ -243,9 +249,9 @@ const MyRentalRequests = () => {
                                         ✅ Confirm Pickup
                                     </button>
                                 )}
-                                
-                                {/* Track delivery */}
-                                {request.status === 'paid' && request.delivery_option === 'delivery' && request.delivery_paid && request.delivery_status !== 'delivered' && (
+
+                                {/* Track delivery - show until user confirms receipt */}
+                                {request.status === 'paid' && request.delivery_option === 'delivery' && request.delivery_paid && !request.delivery_confirmed && (
                                     <button
                                         className="track-delivery-btn"
                                         onClick={() => setTrackingModal({ visible: true, requestId: request.id })}
@@ -253,9 +259,9 @@ const MyRentalRequests = () => {
                                         📦 Track Delivery
                                     </button>
                                 )}
-                                
-                                {/* Rate after delivery complete */}
-                                {request.status === 'paid' && request.delivery_status === 'delivered' && !request.rated && (
+
+                                {/* Rate after user confirms delivery */}
+                                {request.status === 'paid' && request.delivery_confirmed && !request.rated && (
                                     <button
                                         className="rate-btn"
                                         onClick={() => setRatingModal({ visible: true, request })}
@@ -263,17 +269,40 @@ const MyRentalRequests = () => {
                                         ⭐ Rate Experience
                                     </button>
                                 )}
-                                
-                                {/* Initiate return after rental period */}
-                                {request.status === 'paid' && request.delivery_status === 'delivered' && !request.return_initiated && new Date() > new Date(request.end_date) && (
-                                    <button
-                                        className="initiate-return-btn"
-                                        onClick={() => setReturnModal({ visible: true, request })}
-                                    >
-                                        📤 Initiate Return
-                                    </button>
+
+                                {/* Initiate return after rental period and delivery confirmed */}
+                                {request.status === 'paid' && request.delivery_confirmed && !request.return_initiated && new Date() > new Date(request.end_date) && (
+                                    <>
+                                        <button
+                                            className="initiate-return-btn"
+                                            onClick={() => setReturnModal({ visible: true, request })}
+                                        >
+                                            📤 Initiate Return (Required)
+                                        </button>
+                                        {(() => {
+                                            const endDate = new Date(request.end_date);
+                                            const now = new Date();
+                                            const hoursPastEnd = (now - endDate) / (1000 * 60 * 60);
+                                            const hoursRemaining = 36 - hoursPastEnd;
+                                            
+                                            if (hoursRemaining > 0) {
+                                                return (
+                                                    <div className="return-window-notice">
+                                                        ⏰ Return within {Math.floor(hoursRemaining)}h to avoid late fees
+                                                    </div>
+                                                );
+                                            } else {
+                                                const hoursLate = Math.abs(hoursRemaining);
+                                                return (
+                                                    <div className="return-overdue-notice">
+                                                        ⚠️ Overdue by {Math.floor(hoursLate)}h - Late fees apply!
+                                                    </div>
+                                                );
+                                            }
+                                        })()}
+                                    </>
                                 )}
-                                
+
                                 {/* Track return delivery */}
                                 {request.return_initiated && request.return_option === 'delivery' && request.return_delivery_status !== 'delivered' && (
                                     <button
@@ -283,7 +312,7 @@ const MyRentalRequests = () => {
                                         📦 Track Return
                                     </button>
                                 )}
-                                
+
                                 {/* Confirm return pickup for renter */}
                                 {request.return_initiated && request.return_option === 'pickup' && !request.return_confirmed_by_renter && (
                                     <button
@@ -293,7 +322,7 @@ const MyRentalRequests = () => {
                                         ✅ Confirm Return Pickup
                                     </button>
                                 )}
-                                
+
                                 {request.status === 'approved' && request.payment_status === 'completed' && (
                                     <button
                                         className="view-receipt-btn"
@@ -328,13 +357,13 @@ const MyRentalRequests = () => {
 
     const handleDeliveryChosen = async (deliveryOption, cost, requiresPayment) => {
         setDeliveryOptionModal({ visible: false, request: null });
-        
+
         if (requiresPayment) {
             showActionMessage('success', `Delivery option selected. Please complete payment of ₹${cost}`);
         } else {
             showActionMessage('success', 'Pickup option selected. Please coordinate with the lister.');
         }
-        
+
         await fetchMyRequests();
     };
 
@@ -345,7 +374,7 @@ const MyRentalRequests = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ requestId })
             });
-            
+
             showActionMessage('success', 'Pickup confirmed! Waiting for lister confirmation.');
             await fetchMyRequests();
         } catch (error) {
@@ -361,7 +390,7 @@ const MyRentalRequests = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ requestId })
             });
-            
+
             showActionMessage('success', 'Return pickup confirmed! Waiting for lister confirmation.');
             await fetchMyRequests();
         } catch (error) {
@@ -388,7 +417,7 @@ const MyRentalRequests = () => {
 
             // Simulate payment processing
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
+
             // Update request status to paid
             const response = await fetch(`/api/rental-requests/${paymentModal.request.id}/payment`, {
                 method: 'POST',
@@ -405,21 +434,21 @@ const MyRentalRequests = () => {
 
             if (response.ok) {
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // Update the request status to 'paid' in the local state
-                    setRequests(prev => prev.map(req => 
-                        req.id === paymentModal.request.id 
+                    setRequests(prev => prev.map(req =>
+                        req.id === paymentModal.request.id
                             ? { ...req, status: 'paid', payment_status: 'completed' }
                             : req
                     ));
-                    
+
                     // Close payment modal
                     setPaymentModal({ visible: false, request: null });
-                    
+
                     // Show receipt
-                    const updatedRequest = { 
-                        ...paymentModal.request, 
+                    const updatedRequest = {
+                        ...paymentModal.request,
                         status: 'paid',
                         payment_status: 'completed',
                         transaction_id: data.request.transaction_id,
@@ -464,127 +493,168 @@ const MyRentalRequests = () => {
 
     return (
         <>
-        <div className="rentals-page">
-            <div className="rentals-container">
-                {actionMessage.visible && (
-                    <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
-                        <div className="message-content">
-                            <span className="message-icon">
-                                {actionMessage.type === 'success' ? '✅' : '❌'}
-                            </span>
-                            <span className="message-text">{actionMessage.message}</span>
-                            <button 
-                                className="close-message"
-                                onClick={() => setActionMessage({ type: '', message: '', visible: false })}
-                            >
-                                ×
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Header */}
-                <div className="rentals-header">
-                    <div className="header-left">
-                        <h1 className="rentals-title">My Rental Requests</h1>
-                    </div>
-                </div>
-
-                {/* Filters/Tabs Section */}
-                <div className="form-section">
-                    <div className="tabs-container">
-                        <div className="tabs">
-                            {['pending', 'approved', 'paid', 'denied'].map(tab => (
+            <div className="rentals-page">
+                <div className="rentals-container">
+                    {actionMessage.visible && (
+                        <div className={`action-message ${actionMessage.type === 'success' ? 'success' : 'error'}`}>
+                            <div className="message-content">
+                                <span className="message-icon">
+                                    {actionMessage.type === 'success' ? '✅' : '❌'}
+                                </span>
+                                <span className="message-text">{actionMessage.message}</span>
                                 <button
-                                    key={tab}
-                                    className={`tab ${activeTab === tab ? 'active' : ''}`}
-                                    onClick={() => setActiveTab(tab)}
+                                    className="close-message"
+                                    onClick={() => setActionMessage({ type: '', message: '', visible: false })}
                                 >
-                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                    {tabCounts[tab] > 0 && (
-                                        <span className="tab-count">{tabCounts[tab]}</span>
-                                    )}
+                                    ×
                                 </button>
-                            ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Header */}
+                    <div className="rentals-header">
+                        <div className="header-left">
+                            <h1 className="rentals-title">My Rental Requests</h1>
                         </div>
                     </div>
+
+                    {/* Filters/Tabs Section */}
+                    <div className="form-section">
+                        <div className="tabs-container">
+                            <div className="tabs">
+                                {['pending', 'approved', 'paid', 'denied'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        className={`tab ${activeTab === tab ? 'active' : ''}`}
+                                        onClick={() => setActiveTab(tab)}
+                                    >
+                                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                        {tabCounts[tab] > 0 && (
+                                            <span className="tab-count">{tabCounts[tab]}</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {renderTabContent()}
                 </div>
-
-                {renderTabContent()}
             </div>
-        </div>
 
-        {/* Payment Modal */}
-        {paymentModal.visible && (
-            <PaymentModal 
-                request={paymentModal.request}
-                onSubmit={handlePaymentSubmit}
-                onClose={() => setPaymentModal({ visible: false, request: null })}
-            />
-        )}
+            {/* Payment Modal */}
+            {paymentModal.visible && (
+                <PaymentModal
+                    request={paymentModal.request}
+                    onSubmit={handlePaymentSubmit}
+                    onClose={() => setPaymentModal({ visible: false, request: null })}
+                />
+            )}
 
-        {/* Receipt Modal */}
-        {receiptModal.visible && (
-            <ReceiptModal 
-                request={receiptModal.request}
-                onClose={() => setReceiptModal({ visible: false, request: null })}
-            />
-        )}
+            {/* Receipt Modal */}
+            {receiptModal.visible && (
+                <ReceiptModal
+                    request={receiptModal.request}
+                    onClose={() => setReceiptModal({ visible: false, request: null })}
+                />
+            )}
 
-        {/* Delivery Option Modal */}
-        {deliveryOptionModal.visible && (
-            <DeliveryOption
-                request={deliveryOptionModal.request}
-                onDeliveryChosen={handleDeliveryChosen}
-                onClose={() => setDeliveryOptionModal({ visible: false, request: null })}
-            />
-        )}
+            {/* Delivery Option Modal */}
+            {deliveryOptionModal.visible && (
+                <DeliveryOption
+                    request={deliveryOptionModal.request}
+                    onDeliveryChosen={handleDeliveryChosen}
+                    onClose={() => setDeliveryOptionModal({ visible: false, request: null })}
+                />
+            )}
 
-        {/* Delivery Payment Modal */}
-        {deliveryPaymentModal.visible && (
-            <DeliveryPaymentModal
-                request={deliveryPaymentModal.request}
-                cost={deliveryPaymentModal.cost}
-                onClose={() => setDeliveryPaymentModal({ visible: false, request: null, cost: 0 })}
-                onSuccess={async () => {
-                    setDeliveryPaymentModal({ visible: false, request: null, cost: 0 });
-                    showActionMessage('success', 'Delivery payment successful! Tracking your delivery...');
-                    await fetchMyRequests();
-                }}
-            />
-        )}
+            {/* Delivery Payment Modal */}
+            {deliveryPaymentModal.visible && (
+                <DeliveryPaymentModal
+                    request={deliveryPaymentModal.request}
+                    cost={deliveryPaymentModal.cost}
+                    onClose={() => setDeliveryPaymentModal({ visible: false, request: null, cost: 0 })}
+                    onSuccess={async () => {
+                        setDeliveryPaymentModal({ visible: false, request: null, cost: 0 });
+                        showActionMessage('success', 'Delivery payment successful! Tracking your delivery...');
+                        await fetchMyRequests();
+                    }}
+                />
+            )}
 
-        {/* Delivery Tracking Modal */}
-        {trackingModal.visible && (
-            <DeliveryTracking
-                requestId={trackingModal.requestId}
-                isReturn={trackingModal.isReturn || false}
-                onClose={() => setTrackingModal({ visible: false, requestId: null })}
-            />
-        )}
+            {/* Delivery Tracking Modal */}
+            {trackingModal.visible && (
+                <DeliveryTracking
+                    requestId={trackingModal.requestId}
+                    isReturn={trackingModal.isReturn || false}
+                    onClose={async () => {
+                        setTrackingModal({ visible: false, requestId: null });
+                        await fetchMyRequests();
+                    }}
+                />
+            )}
 
-        {/* Rating Modal */}
-        {ratingModal.visible && (
-            <Rating
-                request={ratingModal.request}
-                onRatingSubmitted={handleRatingSubmitted}
-                onClose={() => setRatingModal({ visible: false, request: null })}
-            />
-        )}
+            {/* Rating Modal */}
+            {ratingModal.visible && (
+                <Rating
+                    request={ratingModal.request}
+                    onRatingSubmitted={handleRatingSubmitted}
+                    onClose={() => setRatingModal({ visible: false, request: null })}
+                />
+            )}
 
-        {/* Return Initiation Modal (reuses DeliveryOption) */}
-        {returnModal.visible && (
-            <DeliveryOption
-                request={returnModal.request}
-                onDeliveryChosen={async (option, cost) => {
-                    setReturnModal({ visible: false, request: null });
-                    showActionMessage('success', 'Return initiated successfully');
-                    await fetchMyRequests();
-                }}
-                onClose={() => setReturnModal({ visible: false, request: null })}
-            />
-        )}
-      </>
+            {/* Return Payment Modal */}
+            {returnPaymentModal.visible && (
+                <DeliveryPaymentModal
+                    request={returnPaymentModal.request}
+                    cost={returnPaymentModal.cost}
+                    isReturn={true}
+                    lateFeeInfo={returnPaymentModal.lateFeeInfo}
+                    onClose={() => setReturnPaymentModal({ visible: false, request: null, cost: 0, lateFeeInfo: null })}
+                    onSuccess={async () => {
+                        setReturnPaymentModal({ visible: false, request: null, cost: 0, lateFeeInfo: null });
+                        const lateFee = returnPaymentModal.lateFeeInfo?.lateFee || 0;
+                        if (lateFee > 0) {
+                            showActionMessage('success', `Return delivery payment successful! Late fee of ₹${lateFee} applied.`);
+                        } else {
+                            showActionMessage('success', 'Return delivery payment successful! Tracking your return...');
+                        }
+                        await fetchMyRequests();
+                    }}
+                />
+            )}
+
+            {/* Return Initiation Modal (reuses DeliveryOption) */}
+            {returnModal.visible && (
+                <DeliveryOption
+                    request={returnModal.request}
+                    isReturn={true}
+                    onDeliveryChosen={async (option, cost, responseData) => {
+                        setReturnModal({ visible: false, request: null });
+                        
+                        // If return delivery requires payment, show payment modal
+                        if (responseData.requiresPayment && cost > 0) {
+                            setReturnPaymentModal({ 
+                                visible: true, 
+                                request: returnModal.request,
+                                cost: cost,
+                                lateFeeInfo: responseData
+                            });
+                        } else {
+                            // No payment needed (pickup option)
+                            if (responseData.isLate) {
+                                showActionMessage('warning', `Return initiated with late fee of ₹${responseData.lateFee} (${responseData.daysLate} day${responseData.daysLate !== 1 ? 's' : ''} late)`);
+                            } else {
+                                showActionMessage('success', 'Return initiated successfully - within 36-hour window');
+                            }
+                            await fetchMyRequests();
+                        }
+                    }}
+                    onClose={() => setReturnModal({ visible: false, request: null })}
+                />
+            )}
+        </>
     );
 };
 
@@ -621,7 +691,7 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                     <h3>Complete Payment</h3>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
-                
+
                 <div className="payment-summary">
                     <h4>{request.listing_title}</h4>
                     <p>Duration: {request.total_days} day{request.total_days !== 1 ? 's' : ''}</p>
@@ -644,9 +714,9 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                 <form onSubmit={handleSubmit} className="payment-form">
                     <div className="form-group">
                         <label>Payment Method</label>
-                        <select 
+                        <select
                             value={paymentData.method}
-                            onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
+                            onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                         >
                             <option value="card">Credit/Debit Card</option>
                             <option value="paypal">PayPal</option>
@@ -661,42 +731,42 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                                 <input
                                     type="text"
                                     value={paymentData.nameOnCard}
-                                    onChange={(e) => setPaymentData({...paymentData, nameOnCard: e.target.value})}
+                                    onChange={(e) => setPaymentData({ ...paymentData, nameOnCard: e.target.value })}
                                     required
                                 />
                             </div>
-                            
+
                             <div className="form-group">
                                 <label>Card Number</label>
                                 <input
                                     type="text"
                                     value={paymentData.cardNumber}
-                                    onChange={(e) => setPaymentData({...paymentData, cardNumber: formatCardNumber(e.target.value)})}
+                                    onChange={(e) => setPaymentData({ ...paymentData, cardNumber: formatCardNumber(e.target.value) })}
                                     placeholder="1234 5678 9012 3456"
                                     maxLength={19}
                                     required
                                 />
                             </div>
-                            
+
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Expiry Date</label>
                                     <input
                                         type="text"
                                         value={paymentData.expiryDate}
-                                        onChange={(e) => setPaymentData({...paymentData, expiryDate: formatExpiryDate(e.target.value)})}
+                                        onChange={(e) => setPaymentData({ ...paymentData, expiryDate: formatExpiryDate(e.target.value) })}
                                         placeholder="MM/YY"
                                         maxLength={5}
                                         required
                                     />
                                 </div>
-                                
+
                                 <div className="form-group">
                                     <label>CVV</label>
                                     <input
                                         type="text"
                                         value={paymentData.cvv}
-                                        onChange={(e) => setPaymentData({...paymentData, cvv: e.target.value.replace(/\D/g, '')})}
+                                        onChange={(e) => setPaymentData({ ...paymentData, cvv: e.target.value.replace(/\D/g, '') })}
                                         placeholder="123"
                                         maxLength={4}
                                         required
@@ -710,8 +780,8 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                         <button type="button" className="btn btn-cancel" onClick={onClose}>
                             Cancel
                         </button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className="btn btn-pay"
                             disabled={paymentData.processing}
                         >
@@ -736,7 +806,7 @@ const ReceiptModal = ({ request, onClose }) => {
                     <h3>Payment Receipt</h3>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
-                
+
                 <div className="receipt-content">
                     <div className="receipt-header">
                         <div className="success-icon">✅</div>
@@ -805,7 +875,7 @@ const ReceiptModal = ({ request, onClose }) => {
 };
 
 // Delivery Payment Modal Component
-const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess }) => {
+const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = false, lateFeeInfo = null }) => {
     const [processing, setProcessing] = useState(false);
 
     const handlePayment = async () => {
@@ -813,13 +883,14 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess }) => {
         try {
             // Simulate payment processing
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            const response = await fetch('/api/pay-delivery', {
+
+            const endpoint = isReturn ? '/api/pay-return-delivery' : '/api/pay-delivery';
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     requestId: request.id,
-                    transactionId: `DELVTXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    transactionId: `${isReturn ? 'RETTXN' : 'DELVTXN'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 })
             });
 
@@ -835,21 +906,33 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess }) => {
         }
     };
 
+    const totalCost = isReturn && lateFeeInfo?.lateFee ? (parseFloat(cost) + parseFloat(lateFeeInfo.lateFee)).toFixed(2) : cost;
+
     return (
         <div className="modal-overlay">
             <div className="payment-modal">
                 <div className="modal-header">
-                    <h3>Pay for Delivery</h3>
+                    <h3>{isReturn ? 'Pay for Return Delivery' : 'Pay for Delivery'}</h3>
                     <button className="modal-close" onClick={onClose}>×</button>
                 </div>
-                
+
                 <div className="payment-summary">
-                    <h4>Delivery Payment</h4>
+                    <h4>{isReturn ? 'Return Delivery Payment' : 'Delivery Payment'}</h4>
                     <p>{request.listing_title}</p>
                     <div className="price-breakdown-detail">
+                        <div className="breakdown-row">
+                            <span>{isReturn ? 'Return Delivery Cost:' : 'Delivery Cost:'}</span>
+                            <span>₹{cost}</span>
+                        </div>
+                        {isReturn && lateFeeInfo?.lateFee > 0 && (
+                            <div className="breakdown-row" style={{color: '#e74c3c'}}>
+                                <span>Late Fee ({lateFeeInfo.daysLate} day{lateFeeInfo.daysLate !== 1 ? 's' : ''}):</span>
+                                <span>₹{lateFeeInfo.lateFee}</span>
+                            </div>
+                        )}
                         <div className="breakdown-row total">
-                            <strong>Delivery Cost:</strong>
-                            <strong>₹{cost}</strong>
+                            <strong>Total:</strong>
+                            <strong>₹{totalCost}</strong>
                         </div>
                     </div>
                 </div>
@@ -858,12 +941,12 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess }) => {
                     <button className="btn btn-cancel" onClick={onClose} disabled={processing}>
                         Cancel
                     </button>
-                    <button 
+                    <button
                         className="btn btn-pay"
                         onClick={handlePayment}
                         disabled={processing}
                     >
-                        {processing ? 'Processing...' : `Pay ₹${cost}`}
+                        {processing ? 'Processing...' : `Pay ₹${totalCost}`}
                     </button>
                 </div>
             </div>

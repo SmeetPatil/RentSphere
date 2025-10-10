@@ -224,16 +224,16 @@ app.get("/setup-rental-requests", async (req, res) => {
 app.get("/debug-google-drive", async (req, res) => {
   try {
     const googleDriveService = require("./services/googleDriveService");
-    
+
     // Check environment variables first
     const envCheck = {
       GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
       GOOGLE_CLIENT_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
       GOOGLE_REFRESH_TOKEN: !!process.env.GOOGLE_REFRESH_TOKEN
     };
-    
+
     const allEnvVarsSet = Object.values(envCheck).every(Boolean);
-    
+
     if (!allEnvVarsSet) {
       return res.json({
         success: false,
@@ -247,10 +247,10 @@ app.get("/debug-google-drive", async (req, res) => {
         ]
       });
     }
-    
+
     // Force re-initialization to see current status
     await googleDriveService.initializeDrive();
-    
+
     // Test basic connectivity
     let driveContents = [];
     let connectionError = null;
@@ -265,7 +265,7 @@ app.get("/debug-google-drive", async (req, res) => {
       console.error('Error listing drive contents:', listError);
       connectionError = listError.message;
     }
-    
+
     res.json({
       success: !!googleDriveService.drive && !!googleDriveService.parentFolderId,
       message: "Google Drive configuration status",
@@ -295,7 +295,7 @@ app.get("/test-google-drive", async (req, res) => {
   try {
     const googleDriveService = require("./services/googleDriveService");
     const result = await googleDriveService.verifyConfiguration();
-    
+
     if (result.success) {
       res.json({
         success: true,
@@ -375,6 +375,7 @@ app.get("/my-listings", (req, res) => {
 
 const port = process.env.PORT || 8085;
 
-app.listen(port, () => {
+// Start server and run migrations
+app.listen(port, async () => {
   console.log("RentSphere is running on port : " + port);
 });
