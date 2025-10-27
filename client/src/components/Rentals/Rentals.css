@@ -16,7 +16,7 @@
   -webkit-backdrop-filter: blur(20px);
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   overflow: hidden;
@@ -315,7 +315,9 @@
 }
 
 /* Loading and Error States */
-.loading, .error, .no-listings {
+.loading,
+.error,
+.no-listings {
   text-align: center;
   padding: 60px 20px;
   color: #666;
@@ -337,8 +339,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Create Listing Form */
@@ -488,7 +495,7 @@
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .spec-input-group input {
     width: 100%;
   }
@@ -857,49 +864,49 @@
     margin: 0 10px;
     border-radius: 8px;
   }
-  
+
   .rentals-header {
     padding: 15px 20px;
     flex-direction: column;
     gap: 15px;
     align-items: flex-start;
   }
-  
+
   .categories-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 15px;
   }
-  
+
   .listings-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .filters-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .create-listing-form {
     padding: 20px;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .specifications-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .my-listings-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-actions {
     flex-direction: column;
   }
-  
+
   .listings-stats {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -1130,6 +1137,43 @@
   color: #666;
 }
 
+.owner-last-active {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+.active-now {
+  color: #ffffff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.active-recent {
+  color: #ffffff;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.active-today {
+  color: #ffffff;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.active-days {
+  color: #1f2937;
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+  border: 1px solid rgba(156, 163, 175, 0.3);
+  box-shadow: 0 2px 4px rgba(156, 163, 175, 0.2);
+}
+
 .contact-actions {
   display: flex;
   flex-direction: column;
@@ -1178,6 +1222,21 @@
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.5px;
+}
+
+.currently-rented-btn {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%) !important;
+  color: white !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.currently-rented-btn:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 
 .contact-info {
@@ -1255,29 +1314,29 @@
     padding: 20px;
     gap: 25px;
   }
-  
+
   .rental-header-info {
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .rental-title {
     font-size: 24px;
   }
-  
+
   .rental-price-large {
     font-size: 24px;
     padding: 12px 20px;
   }
-  
+
   .main-image {
     height: 250px;
   }
-  
+
   .specs-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .owner-info {
     flex-direction: column;
     text-align: center;
@@ -1338,11 +1397,13 @@
   .listing-map {
     margin: 8px 0;
   }
-  
+
   .listings-grid {
     grid-template-columns: 1fr;
   }
-}/* Rental
+}
+
+/* Rental
  Detail Page Map Styling */
 .rental-location-map {
   background: white;
@@ -1411,11 +1472,11 @@
   .rental-location-map {
     padding: 20px;
   }
-  
+
   .detail-page-map {
     height: 250px !important;
   }
-  
+
   .location-details {
     padding: 12px;
   }
@@ -1475,7 +1536,9 @@
 
 .rental-card-map .leaflet-control-container {
   display: none !important;
-}/* Ima
+}
+
+/* Ima
 ge Gallery Styles */
 .main-image-container {
   position: relative;
@@ -1549,18 +1612,18 @@ ge Gallery Styles */
   .main-image {
     height: 250px;
   }
-  
+
   .image-nav-btn {
     width: 35px;
     height: 35px;
     font-size: 16px;
   }
-  
+
   .thumbnail-image {
     width: 60px !important;
     height: 45px !important;
   }
-  
+
   .thumbnail-gallery {
     gap: 8px !important;
   }
@@ -1603,6 +1666,7 @@ ge Gallery Styles */
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1690,7 +1754,7 @@ ge Gallery Styles */
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-.delivery-option-card > p {
+.delivery-option-card>p {
   color: #d0d0d0;
   font-size: 14px;
   margin-bottom: 15px;
@@ -1973,8 +2037,8 @@ ge Gallery Styles */
   max-height: 85vh;
   overflow-y: auto;
   background: linear-gradient(145deg, #0d1421 0%, #1a202c 50%, #2d3748 100%) !important;
-  box-shadow: 
-    0 30px 100px rgba(0, 0, 0, 0.8), 
+  box-shadow:
+    0 30px 100px rgba(0, 0, 0, 0.8),
     0 0 2px rgba(255, 255, 255, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
   border: 3px solid rgba(255, 255, 255, 0.15);
@@ -2019,7 +2083,7 @@ ge Gallery Styles */
   display: flex;
   align-items: center;
   gap: 30px;
-  box-shadow: 
+  box-shadow:
     0 15px 50px rgba(29, 78, 216, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
@@ -2381,12 +2445,10 @@ ge Gallery Styles */
 
 .rating-divider {
   height: 2px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
+  background: linear-gradient(to right,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent);
   margin: 30px 0;
 }
 
@@ -2513,18 +2575,18 @@ ge Gallery Styles */
   .delivery-options {
     grid-template-columns: 1fr;
   }
-  
+
   .delivery-option-modal,
   .tracking-modal,
   .rating-modal {
     max-width: 95vw;
     margin: 20px;
   }
-  
+
   .star {
     font-size: 36px;
   }
-  
+
   .rating-header {
     flex-direction: column;
     align-items: flex-start;
@@ -2548,7 +2610,7 @@ ge Gallery Styles */
   font-weight: 700;
   font-size: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
+  box-shadow:
     0 6px 20px rgba(25, 118, 210, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
   border: 2px solid rgba(255, 255, 255, 0.1);
@@ -2562,7 +2624,7 @@ ge Gallery Styles */
 .view-listing-btn:hover,
 .btn-view-listing:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 12px 35px rgba(25, 118, 210, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
   background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
@@ -2785,7 +2847,9 @@ ge Gallery Styles */
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}/* Delivery Ratings Section */
+}
+
+/* Delivery Ratings Section */
 .delivery-ratings-section {
   background: white;
   border-radius: 16px;

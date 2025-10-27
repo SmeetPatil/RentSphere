@@ -234,15 +234,12 @@ const NearbyRentalsMap = () => {
                       e.originalEvent.stopPropagation();
                     }
                     
-                    console.log('Pin clicked for listing:', listing.id, 'Current clicked state:', clickedTooltip);
                     
                     // Toggle popup (stationary) on click
                     if (clickedTooltip === listing.id) {
-                      console.log('Closing popup for:', listing.id);
                       setClickedTooltip(null);
                       e.target.closePopup();
                     } else {
-                      console.log('Opening popup for:', listing.id);
                       setClickedTooltip(listing.id);
                       setActiveTooltip(null); // Close any hover tooltip
                       e.target.closeTooltip(); // Close hover tooltip

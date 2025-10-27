@@ -203,18 +203,20 @@ router.post('/pay-delivery', isLoggedIn, async (req, res) => {
         }
 
         // Calculate FIXED delivery times based on distance (these won't change)
-        // En route: 1-1.5 hours after shipping
-        const enRouteMinutes = 60 + Math.random() * 30; // 60-90 minutes
+        // En route: 20-30 minutes after shipping (preparation time)
+        const enRouteMinutes = 20 + Math.random() * 10; // 20-30 minutes
 
         // Total delivery: Based on actual distance
-        // Formula: 15-20 minutes per km (realistic urban delivery)
-        // Minimum 2 hours for very short distances (< 8km)
-        // Maximum 12 hours for very long distances (> 40km)
-        const minutesPerKm = 15 + Math.random() * 5; // 15-20 minutes per km
-        let totalDeliveryMinutes = distance * minutesPerKm;
+        // Formula: 10-15 minutes per km (realistic urban delivery with traffic)
+        // Add base time of 30-45 minutes for pickup, preparation, and final delivery
+        const minutesPerKm = 10 + Math.random() * 5; // 10-15 minutes per km
+        const baseTime = 30 + Math.random() * 15; // 30-45 minutes base time
+        let totalDeliveryMinutes = baseTime + (distance * minutesPerKm);
 
-        // Apply min/max constraints
-        totalDeliveryMinutes = Math.max(120, Math.min(720, totalDeliveryMinutes));
+        // Apply reasonable constraints
+        // Minimum 45 minutes (very close distances)
+        // Maximum 8 hours for very long distances
+        totalDeliveryMinutes = Math.max(45, Math.min(480, totalDeliveryMinutes));
 
         // Get current IST time by converting from system time
         // Create dates in IST (add 5.5 hours to UTC)
@@ -259,7 +261,6 @@ router.post('/pay-delivery', isLoggedIn, async (req, res) => {
             [requestId, formatTimestamp(nowIST), formatTimestamp(expectedEnRouteIST), formatTimestamp(expectedDeliveredIST)]
         );
 
-        console.log(`✅ Update result:`, JSON.stringify(updateResult.rows, null, 2));
 
         if (updateResult.rows.length === 0) {
             throw new Error(`Failed to update request ${requestId} - no rows affected`);
@@ -449,22 +450,24 @@ router.post('/confirm-pickup-lister', isLoggedIn, async (req, res) => {
 // Submit rating
 router.post('/submit-rating', isLoggedIn, async (req, res) => {
     try {
-        const { requestId, rentalRating, listerRating, rentalReview, listerReview } = req.body;
+        const { requestId, itemQuality, itemFunctionality, valueForMoney, ownerCommunication, overallExperience, review } = req.body;
 
-        // Verify request belongs to user and delivery is complete
+        // Verify request belongs to user
         const request = await db.query(
-            `SELECT rr.*, r.user_id as lister_id 
+            `SELECT rr.*, l.user_id as lister_id, l.user_type as lister_type
              FROM rental_requests rr
-             JOIN listings r ON rr.listing_id = r.id
-             WHERE rr.id = $1 AND rr.renter_user_id = $2 AND rr.delivery_status = 'delivered'`,
+             JOIN listings l ON rr.listing_id = l.id
+             WHERE rr.id = $1 AND rr.renter_user_id = $2`,
             [requestId, req.user.id]
         );
 
         if (request.rows.length === 0) {
-            return res.status(404).json({ error: 'Request not found or delivery not complete' });
+            return res.status(404).json({ error: 'Request not found or not authorized' });
         }
 
-        const { rental_id, lister_id } = request.rows[0];
+        const lister_id = request.rows[0].lister_id;
+
+        console.log('Rating submission - lister_id:', lister_id, 'request data:', request.rows[0]);
 
         // Check if rating already exists
         const existing = await db.query(
@@ -472,23 +475,32 @@ router.post('/submit-rating', isLoggedIn, async (req, res) => {
             [requestId]
         );
 
+        const avgRating = Math.round((itemQuality + itemFunctionality + valueForMoney + ownerCommunication + overallExperience) / 5);
+
         if (existing.rows.length > 0) {
             // Update existing rating
             await db.query(
                 `UPDATE ratings 
-                 SET rental_rating = $1, lister_rating = $2, rental_review = $3, lister_review = $4
-                 WHERE rental_request_id = $5`,
-                [rentalRating, listerRating, rentalReview, listerReview, requestId]
+                 SET item_quality = $1, item_functionality = $2, value_for_money = $3, 
+                     owner_communication = $4, overall_experience = $5, detailed_review = $6,
+                     rental_rating = $7
+                 WHERE rental_request_id = $8`,
+                [itemQuality, itemFunctionality, valueForMoney, ownerCommunication, overallExperience, review, avgRating, requestId]
             );
         } else {
             // Insert new rating
             await db.query(
                 `INSERT INTO ratings (rental_request_id, rental_id, renter_id, lister_id, 
-                                     rental_rating, lister_rating, rental_review, lister_review)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-                [requestId, rental_id, req.user.id, lister_id, rentalRating, listerRating, rentalReview, listerReview]
+                                     item_quality, item_functionality, value_for_money, owner_communication, overall_experience,
+                                     detailed_review, rental_rating)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                [requestId, request.rows[0].listing_id, req.user.id, lister_id,
+                    itemQuality, itemFunctionality, valueForMoney, ownerCommunication, overallExperience, review, avgRating]
             );
         }
+
+        // Mark as rated
+        await db.query('UPDATE rental_requests SET rated = TRUE WHERE id = $1', [requestId]);
 
         res.json({ message: 'Rating submitted successfully' });
     } catch (error) {
@@ -497,7 +509,61 @@ router.post('/submit-rating', isLoggedIn, async (req, res) => {
     }
 });
 
-// Get ratings for a rental
+// Get detailed ratings for a listing
+router.get('/listings/:listingId/ratings', async (req, res) => {
+    try {
+        const { listingId } = req.params;
+
+        const ratings = await db.query(
+            `SELECT 
+                r.*,
+                CASE 
+                    WHEN r.renter_id IS NOT NULL THEN 
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM users WHERE id = r.renter_id) THEN (SELECT name FROM users WHERE id = r.renter_id)
+                            ELSE (SELECT name FROM phone_users WHERE id = r.renter_id)
+                        END
+                END as renter_name,
+                CASE 
+                    WHEN r.renter_id IS NOT NULL THEN 
+                        CASE 
+                            WHEN EXISTS (SELECT 1 FROM users WHERE id = r.renter_id) THEN (SELECT profile_picture FROM users WHERE id = r.renter_id)
+                            ELSE NULL
+                        END
+                END as renter_picture
+             FROM ratings r
+             WHERE r.rental_id = $1 AND r.item_quality IS NOT NULL
+             ORDER BY r.created_at DESC`,
+            [listingId]
+        );
+
+        // Calculate averages
+        const avgQuery = await db.query(
+            `SELECT 
+                AVG(item_quality) as avg_item_quality,
+                AVG(item_functionality) as avg_item_functionality,
+                AVG(value_for_money) as avg_value_for_money,
+                AVG(owner_communication) as avg_owner_communication,
+                AVG(overall_experience) as avg_overall_experience,
+                AVG(rental_rating) as avg_overall,
+                COUNT(*) as total_ratings
+             FROM ratings
+             WHERE rental_id = $1 AND item_quality IS NOT NULL`,
+            [listingId]
+        );
+
+        res.json({
+            success: true,
+            ratings: ratings.rows,
+            summary: avgQuery.rows[0]
+        });
+    } catch (error) {
+        console.error('Error fetching ratings:', error);
+        res.status(500).json({ error: 'Failed to fetch ratings' });
+    }
+});
+
+// Get ratings for a rental (legacy endpoint)
 router.get('/ratings/:rentalId', async (req, res) => {
     try {
         const { rentalId } = req.params;
@@ -505,7 +571,7 @@ router.get('/ratings/:rentalId', async (req, res) => {
         const ratings = await db.query(
             `SELECT r.*, u.name as renter_name, u.profile_picture as renter_picture
              FROM ratings r
-             JOIN users u ON r.renter_id = u.id
+             LEFT JOIN users u ON r.renter_id = u.id
              WHERE r.rental_id = $1
              ORDER BY r.created_at DESC`,
             [rentalId]
@@ -688,7 +754,7 @@ router.post('/pay-return-delivery', isLoggedIn, async (req, res) => {
             [requestId, formatTimestamp(nowIST)]
         );
 
-        res.json({ 
+        res.json({
             message: 'Return delivery payment successful',
             status: 'shipped',
             expectedEnRouteAt: formatTimestamp(expectedEnRouteIST),
@@ -740,13 +806,17 @@ router.post('/confirm-return-lister', isLoggedIn, async (req, res) => {
             [requestId]
         );
 
-        // Check if both parties confirmed return
+        // Check return completion based on return option
         const updated = await db.query(
             'SELECT * FROM rental_requests WHERE id = $1',
             [requestId]
         );
 
-        if (updated.rows[0].return_confirmed_by_lister && updated.rows[0].return_confirmed_by_renter) {
+        const returnComplete = updated.rows[0].return_option === 'delivery'
+            ? updated.rows[0].return_confirmed_by_lister  // For delivery, only lister confirmation needed
+            : (updated.rows[0].return_confirmed_by_lister && updated.rows[0].return_confirmed_by_renter); // For pickup, both needed
+
+        if (returnComplete) {
             // Reactivate the rental
             await db.query(
                 'UPDATE listings SET is_available = TRUE, rental_status = \'available\' WHERE id = $1',
@@ -951,7 +1021,8 @@ router.get('/simulate-delivery-progress', isLoggedIn, async (req, res) => {
             if (delivery.delivery_status === 'shipped' && now >= expectedEnRoute) {
                 await db.query(`
                     UPDATE rental_requests 
-                    SET delivery_status = 'en_route', delivery_en_route_at = CURRENT_TIMESTAMP
+                    SET delivery_status = 'en_route', 
+                        delivery_en_route_at = expected_en_route_at
                     WHERE id = $1
                 `, [delivery.id]);
 
@@ -970,7 +1041,8 @@ router.get('/simulate-delivery-progress', isLoggedIn, async (req, res) => {
 
                 await db.query(`
                     UPDATE rental_requests 
-                    SET delivery_status = 'delivered', delivery_delivered_at = CURRENT_TIMESTAMP
+                    SET delivery_status = 'delivered', 
+                        delivery_delivered_at = expected_delivered_at
                     WHERE id = $1
                 `, [delivery.id]);
 
@@ -1034,7 +1106,8 @@ router.get('/simulate-return-delivery-progress', isLoggedIn, async (req, res) =>
             if (returnDelivery.return_delivery_status === 'shipped' && now >= expectedEnRoute) {
                 await db.query(`
                     UPDATE rental_requests 
-                    SET return_delivery_status = 'in_transit', return_en_route_at = CURRENT_TIMESTAMP
+                    SET return_delivery_status = 'in_transit', 
+                        return_en_route_at = expected_return_en_route_at
                     WHERE id = $1
                 `, [returnDelivery.id]);
 
@@ -1053,7 +1126,8 @@ router.get('/simulate-return-delivery-progress', isLoggedIn, async (req, res) =>
 
                 await db.query(`
                     UPDATE rental_requests 
-                    SET return_delivery_status = 'delivered', return_delivered_at = CURRENT_TIMESTAMP
+                    SET return_delivery_status = 'delivered', 
+                        return_delivered_at = expected_return_delivered_at
                     WHERE id = $1
                 `, [returnDelivery.id]);
 
@@ -1234,6 +1308,110 @@ router.post('/rental-requests/:requestId/rate-owner', isLoggedIn, async (req, re
         res.status(500).json({
             success: false,
             error: 'Failed to submit owner rating'
+        });
+    }
+});
+
+// Rate a renter after completing a rental (for owners/listers)
+router.post('/rental-requests/:requestId/rate-renter', isLoggedIn, async (req, res) => {
+    try {
+        const { requestId } = req.params;
+        const { rating, review } = req.body;
+        const currentUserId = req.user.id;
+        const currentUserType = req.user.google_id ? 'google' : 'phone';
+
+        // Validate rating
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({
+                success: false,
+                error: 'Rating must be between 1 and 5'
+            });
+        }
+
+        // Get rental request details
+        const requestResult = await db.query(`
+            SELECT 
+                rr.*,
+                l.user_id as owner_id,
+                l.user_type as owner_type,
+                l.title as listing_title
+            FROM rental_requests rr
+            JOIN listings l ON l.id = rr.listing_id
+            WHERE rr.id = $1
+        `, [requestId]);
+
+        if (requestResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Rental request not found'
+            });
+        }
+
+        const request = requestResult.rows[0];
+
+        // Verify the current user is the owner
+        if (request.owner_id !== currentUserId || request.owner_type !== currentUserType) {
+            return res.status(403).json({
+                success: false,
+                error: 'Only the owner can rate the renter'
+            });
+        }
+
+        // Check if delivery is completed
+        if (!request.delivery_confirmed && request.delivery_option === 'delivery') {
+            return res.status(400).json({
+                success: false,
+                error: 'Can only rate renter after delivery is confirmed'
+            });
+        }
+
+        if (!request.pickup_confirmed_by_lister && request.delivery_option === 'pickup') {
+            return res.status(400).json({
+                success: false,
+                error: 'Can only rate renter after pickup is confirmed'
+            });
+        }
+
+        // Insert renter rating into user_ratings table
+        await db.query(`
+            INSERT INTO user_ratings (
+                rated_user_id,
+                rated_user_type,
+                rater_user_id,
+                rater_user_type,
+                rating,
+                review,
+                listing_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `, [
+            request.renter_user_id,
+            request.renter_user_type,
+            currentUserId,
+            currentUserType,
+            rating,
+            review || null,
+            request.listing_id
+        ]);
+
+        // Mark renter as rated in rental_requests
+        await db.query(`
+            UPDATE rental_requests 
+            SET renter_rated = true
+            WHERE id = $1
+        `, [requestId]);
+
+        console.log('✅ Renter rating submitted successfully');
+
+        res.json({
+            success: true,
+            message: 'Renter rated successfully'
+        });
+
+    } catch (error) {
+        console.error('Error rating renter:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to submit renter rating'
         });
     }
 });

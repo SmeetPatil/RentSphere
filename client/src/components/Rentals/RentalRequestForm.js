@@ -49,6 +49,8 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
 
         try {
             // Validate dates
+            const now = new Date();
+            const currentHour = now.getHours();
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const tomorrow = new Date(today);
@@ -56,8 +58,15 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
             const startDate = new Date(formData.startDate);
             const endDate = new Date(formData.endDate);
 
-            if (startDate < tomorrow) {
-                throw new Error('Start date must be at least tomorrow. You cannot rent for past or current dates.');
+            // Allow same-day rental only if it's before 4 PM
+            const minAllowedDate = currentHour < 16 ? today : tomorrow;
+            
+            if (startDate < minAllowedDate) {
+                if (currentHour >= 16) {
+                    throw new Error('Same-day rental is only available before 4 PM. Please select tomorrow or later.');
+                } else {
+                    throw new Error('Start date cannot be in the past.');
+                }
             }
 
             if (endDate <= startDate) {
@@ -101,11 +110,18 @@ const RentalRequestForm = ({ listing, onClose, onSuccess }) => {
         }
     };
 
-    // Get minimum date (tomorrow - cannot rent for today or past)
+    // Get minimum date (today if before 4 PM, otherwise tomorrow)
     const getMinDate = () => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        const now = new Date();
+        const currentHour = now.getHours();
+        const minDate = new Date();
+        
+        // If it's 4 PM or later, minimum date is tomorrow
+        if (currentHour >= 16) {
+            minDate.setDate(minDate.getDate() + 1);
+        }
+        
+        return minDate.toISOString().split('T')[0];
     };
 
     // Get minimum end date (day after start date)

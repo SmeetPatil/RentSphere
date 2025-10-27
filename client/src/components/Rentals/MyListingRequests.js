@@ -12,58 +12,19 @@ const MyListingRequests = () => {
     const [denialModal, setDenialModal] = useState({ visible: false, requestId: null, denialReason: '' });
     const [trackingModal, setTrackingModal] = useState({ visible: false, requestId: null, isReturn: false });
     const [ratingModal, setRatingModal] = useState({ visible: false, requestId: null, renterName: '', listingTitle: '' });
-    const [ownerRatingModal, setOwnerRatingModal] = useState({ visible: false, requestId: null, ownerName: '', listingTitle: '' });
-    const [rating, setRating] = useState({ delivery: 0, item_condition: 0, communication: 0, comment: '' });
-    const [ownerRating, setOwnerRating] = useState({ rating: 0, review: '' });
+    const [renterRating, setRenterRating] = useState({ rating: 0, review: '' });
     const [activeTab, setActiveTab] = useState('pending');
 
     useEffect(() => {
         fetchMyListings();
         
-        // Start automatic delivery simulation polling
-        const deliverySimulationInterval = setInterval(async () => {
-            try {
-                console.log('🔄 Running automatic delivery simulation...');
-                const response = await fetch('/api/delivery/simulate-delivery-progress');
-                const data = await response.json();
-                
-                if (data.updatesProcessed > 0) {
-                    console.log(`📦 ${data.updatesProcessed} deliveries updated:`, data.updates);
-                    await fetchMyListings();
-                    
-                    data.updates.forEach(update => {
-                        showActionMessage('success', update.message);
-                    });
-                }
-            } catch (error) {
-                console.error('Delivery simulation error:', error);
-            }
+        // Auto-refresh every 30 seconds to show updated delivery statuses
+        // (Cron job on server handles the actual status updates)
+        const refreshInterval = setInterval(() => {
+            fetchMyListings();
         }, 30000);
         
-        // Start automatic return delivery simulation polling
-        const returnSimulationInterval = setInterval(async () => {
-            try {
-                console.log('🔄 Running automatic return delivery simulation...');
-                const response = await fetch('/api/delivery/simulate-return-delivery-progress');
-                const data = await response.json();
-                
-                if (data.updatesProcessed > 0) {
-                    console.log(`📦 ${data.updatesProcessed} return deliveries updated:`, data.updates);
-                    await fetchMyListings();
-                    
-                    data.updates.forEach(update => {
-                        showActionMessage('success', update.message);
-                    });
-                }
-            } catch (error) {
-                console.error('Return delivery simulation error:', error);
-            }
-        }, 30000);
-        
-        return () => {
-            clearInterval(deliverySimulationInterval);
-            clearInterval(returnSimulationInterval);
-        };
+        return () => clearInterval(refreshInterval);
     }, []);
 
     const showActionMessage = (type, message) => {
@@ -194,35 +155,32 @@ const MyListingRequests = () => {
         handleRequestAction(denialModal.requestId, 'denied', denialModal.denialReason);
     };
 
-    const handleRatingSubmit = async () => {
-        if (rating.delivery === 0 || rating.item_condition === 0 || rating.communication === 0) {
-            showActionMessage('error', 'Please provide all ratings');
+    const handleRenterRatingSubmit = async () => {
+        if (renterRating.rating === 0) {
+            showActionMessage('error', 'Please provide a rating');
             return;
         }
 
         try {
-            const response = await fetch(`/api/rental-requests/${ratingModal.requestId}/rate`, {
+            const response = await fetch(`/api/rental-requests/${ratingModal.requestId}/rate-renter`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ 
-                    delivery_rating: rating.delivery,
-                    item_condition_rating: rating.item_condition,
-                    communication_rating: rating.communication,
-                    comment: rating.comment,
-                    rater_type: 'lister'
+                    rating: renterRating.rating,
+                    review: renterRating.review
                 })
             });
 
             const data = await response.json();
             if (data.success) {
-                showActionMessage('success', 'Rating submitted successfully');
+                showActionMessage('success', 'Renter rating submitted successfully! ⭐');
                 setRatingModal({ visible: false, requestId: null, renterName: '', listingTitle: '' });
-                setRating({ delivery: 0, item_condition: 0, communication: 0, comment: '' });
+                setRenterRating({ rating: 0, review: '' });
                 fetchMyListings();
             } else {
-                showActionMessage('error', data.message || 'Failed to submit rating');
+                showActionMessage('error', data.error || 'Failed to submit rating');
             }
         } catch (error) {
             console.error('Error submitting rating:', error);
@@ -230,38 +188,7 @@ const MyListingRequests = () => {
         }
     };
 
-    const handleOwnerRatingSubmit = async () => {
-        if (ownerRating.rating === 0) {
-            showActionMessage('error', 'Please provide a rating');
-            return;
-        }
 
-        try {
-            const response = await fetch(`/api/rental-requests/${ownerRatingModal.requestId}/rate-owner`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    rating: ownerRating.rating,
-                    review: ownerRating.review
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                showActionMessage('success', 'Owner rating submitted successfully! ⭐');
-                setOwnerRatingModal({ visible: false, requestId: null, ownerName: '', listingTitle: '' });
-                setOwnerRating({ rating: 0, review: '' });
-                fetchMyListings();
-            } else {
-                showActionMessage('error', data.error || 'Failed to submit owner rating');
-            }
-        } catch (error) {
-            console.error('Error submitting owner rating:', error);
-            showActionMessage('error', 'Failed to submit owner rating');
-        }
-    };
 
     // Get all requests across all listings
     const getAllRequests = () => {
@@ -290,6 +217,7 @@ const MyListingRequests = () => {
             pending: allRequests.filter(r => r.status === 'pending').length,
             approved: allRequests.filter(r => r.status === 'approved').length,
             paid: allRequests.filter(r => r.status === 'paid').length,
+            completed: allRequests.filter(r => r.status === 'completed').length,
             denied: allRequests.filter(r => r.status === 'denied').length
         };
     };
@@ -299,7 +227,8 @@ const MyListingRequests = () => {
             pending: 'status-pending',
             approved: 'status-approved',
             paid: 'status-paid',
-            denied: 'status-denied'
+            denied: 'status-denied',
+            completed: 'status-completed'
         };
 
         return (
@@ -424,6 +353,32 @@ const MyListingRequests = () => {
                     </div>
                 )}
 
+                {/* Rate Renter after rental is completed */}
+                {request.status === 'completed' && !request.renter_rated && (
+                    <div className="request-actions">
+                        <button
+                            onClick={() => setRatingModal({ 
+                                visible: true, 
+                                requestId: request.id, 
+                                renterName: request.renter_name,
+                                listingTitle: listing.title
+                            })}
+                            className="btn btn-approve"
+                        >
+                            ⭐ Rate Renter
+                        </button>
+                    </div>
+                )}
+
+                {/* Show rated status */}
+                {request.status === 'completed' && request.renter_rated && (
+                    <div className="request-actions">
+                        <div className="delivery-completed">
+                            <span className="status-badge delivered">✅ Renter Rated</span>
+                        </div>
+                    </div>
+                )}
+
                 {/* Smart delivery status buttons */}
                 {request.status === 'paid' && request.delivery_option === 'delivery' && request.delivery_paid && (
                     <div className="request-actions">
@@ -437,43 +392,7 @@ const MyListingRequests = () => {
                             </button>
                         )}
                         
-                        {/* Show Rate Delivery when renter confirms delivery */}
-                        {request.delivery_confirmed && !request.delivery_rated && (
-                            <button
-                                onClick={() => setRatingModal({ 
-                                    visible: true, 
-                                    requestId: request.id, 
-                                    renterName: request.renter_name,
-                                    listingTitle: listing.title
-                                })}
-                                className="btn btn-approve"
-                            >
-                                ⭐ Rate Delivery
-                            </button>
-                        )}
-                        
-                        {/* Show Rate Owner button when renter confirms delivery */}
-                        {request.delivery_confirmed && !request.owner_rated && (
-                            <button
-                                onClick={() => setOwnerRatingModal({ 
-                                    visible: true, 
-                                    requestId: request.id, 
-                                    ownerName: listing.owner_name || 'Owner',
-                                    listingTitle: listing.title
-                                })}
-                                className="btn btn-message"
-                                style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                            >
-                                👤 Rate Owner
-                            </button>
-                        )}
-                        
-                        {/* Show completed status when both are rated */}
-                        {request.delivery_confirmed && request.delivery_rated && request.owner_rated && (
-                            <div className="delivery-completed">
-                                <span className="status-badge delivered">✅ Delivery Completed & Rated</span>
-                            </div>
-                        )}
+
                     </div>
                 )}
 
@@ -595,7 +514,7 @@ const MyListingRequests = () => {
                         <div className="form-section">
                             <div className="tabs-container">
                         <div className="tabs">
-                            {['pending', 'approved', 'paid', 'denied'].map(tab => {
+                            {['pending', 'approved', 'paid', 'completed', 'denied'].map(tab => {
                                 const count = getTabCounts()[tab];
                                 return (
                                     <button
@@ -688,68 +607,38 @@ const MyListingRequests = () => {
                         
                         <div className="rating-content">
                             <h3>📦 {ratingModal.listingTitle}</h3>
+                            <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px' }}>
+                                Rate your experience with this renter
+                            </p>
                             
                             <div className="rating-sections">
                                 <div className="rating-section">
-                                    <div className="rating-header">
-                                        <h4>🚚 Delivery Experience</h4>
-                                        <div className="rating-stars">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star}
-                                                    className={`star ${rating.delivery >= star ? 'active' : ''}`}
-                                                    onClick={() => setRating(prev => ({ ...prev, delivery: star }))}
-                                                >
-                                                    ⭐
-                                                </span>
-                                            ))}
-                                        </div>
+                                    <h4>⭐ Overall Renter Rating</h4>
+                                    <div className="rating-stars" style={{fontSize: '32px', margin: '15px 0'}}>
+                                        {[1, 2, 3, 4, 5].map(star => (
+                                            <span 
+                                                key={star}
+                                                className={`star ${renterRating.rating >= star ? 'active' : ''}`}
+                                                onClick={() => setRenterRating(prev => ({ ...prev, rating: star }))}
+                                                style={{cursor: 'pointer', margin: '0 5px'}}
+                                            >
+                                                {renterRating.rating >= star ? '⭐' : '☆'}
+                                            </span>
+                                        ))}
                                     </div>
                                 </div>
                                 
                                 <div className="rating-section">
-                                    <div className="rating-header">
-                                        <h4>📦 Item Condition</h4>
-                                        <div className="rating-stars">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star}
-                                                    className={`star ${rating.item_condition >= star ? 'active' : ''}`}
-                                                    onClick={() => setRating(prev => ({ ...prev, item_condition: star }))}
-                                                >
-                                                    ⭐
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="rating-section">
-                                    <div className="rating-header">
-                                        <h4>💬 Communication</h4>
-                                        <div className="rating-stars">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star}
-                                                    className={`star ${rating.communication >= star ? 'active' : ''}`}
-                                                    onClick={() => setRating(prev => ({ ...prev, communication: star }))}
-                                                >
-                                                    ⭐
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="rating-section">
-                                    <h4>💭 Additional Comments</h4>
+                                    <h4>💭 Review (Optional)</h4>
                                     <textarea
-                                        value={rating.comment}
-                                        onChange={(e) => setRating(prev => ({ ...prev, comment: e.target.value }))}
-                                        placeholder="Share your experience with this renter..."
+                                        value={renterRating.review}
+                                        onChange={(e) => setRenterRating(prev => ({ ...prev, review: e.target.value }))}
+                                        placeholder="Share your experience with this renter... Were they respectful? Did they return the item on time and in good condition?"
                                         className="rating-comment"
                                         rows="4"
+                                        maxLength="500"
                                     />
+                                    <span className="char-count">{renterRating.review.length}/500</span>
                                 </div>
                             </div>
                             
@@ -761,81 +650,9 @@ const MyListingRequests = () => {
                                     Cancel
                                 </button>
                                 <button 
-                                    onClick={handleRatingSubmit}
+                                    onClick={handleRenterRatingSubmit}
                                     className="btn btn-primary"
-                                >
-                                    Submit Rating
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Owner Rating Modal */}
-            {ownerRatingModal.visible && (
-                <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && setOwnerRatingModal({ visible: false, requestId: null, ownerName: '', listingTitle: '' })}>
-                    <div className="rating-modal modal-content">
-                        <div className="modal-header">
-                            <h2>👤 Rate Owner: {ownerRatingModal.ownerName}</h2>
-                            <button 
-                                className="modal-close"
-                                onClick={() => setOwnerRatingModal({ visible: false, requestId: null, ownerName: '', listingTitle: '' })}
-                            >
-                                ×
-                            </button>
-                        </div>
-                        
-                        <div className="rating-content">
-                            <h3>📦 {ownerRatingModal.listingTitle}</h3>
-                            <p style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px', marginBottom: '20px' }}>
-                                Rate your experience with this owner/lister
-                            </p>
-                            
-                            <div className="rating-sections">
-                                <div className="rating-section">
-                                    <div className="rating-header">
-                                        <h4>⭐ Overall Rating</h4>
-                                        <div className="rating-stars">
-                                            {[1, 2, 3, 4, 5].map(star => (
-                                                <span 
-                                                    key={star}
-                                                    className={`star ${ownerRating.rating >= star ? 'active' : ''}`}
-                                                    onClick={() => setOwnerRating(prev => ({ ...prev, rating: star }))}
-                                                >
-                                                    ⭐
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <p style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '12px', marginTop: '8px' }}>
-                                        Consider: Communication, item accuracy, professionalism, overall experience
-                                    </p>
-                                </div>
-                                
-                                <div className="rating-section">
-                                    <h4>💭 Review (Optional)</h4>
-                                    <textarea
-                                        value={ownerRating.review}
-                                        onChange={(e) => setOwnerRating(prev => ({ ...prev, review: e.target.value }))}
-                                        placeholder="Share your experience with this owner... Was the item as described? Was communication good?"
-                                        className="rating-comment"
-                                        rows="4"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <div className="modal-actions">
-                                <button 
-                                    onClick={() => setOwnerRatingModal({ visible: false, requestId: null, ownerName: '', listingTitle: '' })}
-                                    className="btn btn-secondary"
-                                >
-                                    Cancel
-                                </button>
-                                <button 
-                                    onClick={handleOwnerRatingSubmit}
-                                    className="btn btn-primary"
-                                    disabled={ownerRating.rating === 0}
+                                    disabled={renterRating.rating === 0}
                                 >
                                     Submit Rating
                                 </button>

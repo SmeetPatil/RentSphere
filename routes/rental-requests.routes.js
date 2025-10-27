@@ -411,7 +411,7 @@ router.post('/api/rental-requests/:requestId/payment', isLoggedIn, async (req, r
             });
         }
 
-        // Update listing status to rented (it's already deactivated from approval)
+        // Update listing status to rented (keep is_available = false)
         await pool.query(
             'UPDATE listings SET rental_status = \'rented\' WHERE id = $1',
             [rentalRequest.listing_id]

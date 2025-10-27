@@ -340,6 +340,13 @@
     box-shadow: 0 2px 4px rgba(253, 203, 110, 0.4);
 }
 
+.status-completed {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    box-shadow: 0 2px 4px rgba(195, 230, 203, 0.4);
+}
+
 /* Return window notices */
 .return-window-notice {
     margin-top: 8px;

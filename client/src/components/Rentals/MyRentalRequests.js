@@ -65,7 +65,8 @@ const MyRentalRequests = () => {
             approved: { class: 'status-approved', text: 'Approved' },
             paid: { class: 'status-paid', text: 'Paid' },
             denied: { class: 'status-denied', text: 'Denied' },
-            expired: { class: 'status-expired', text: 'Expired' }
+            expired: { class: 'status-expired', text: 'Expired' },
+            completed: { class: 'status-completed', text: 'Completed' }
         };
 
         const config = statusConfig[status] || { class: 'status-unknown', text: status };
@@ -80,24 +81,12 @@ const MyRentalRequests = () => {
         });
     };
 
+    // Only show actual uploaded images - no placeholders
     const getFirstImage = (images) => {
-        if (!images || images.length === 0) return null;
-        return images[0];
-    };
-
-    const getDefaultImage = (category) => {
-        const defaults = {
-            'electronics': 'https://img.icons8.com/?size=100&id=85103&format=png&color=000000',
-            'vehicles': 'https://img.icons8.com/?size=100&id=13800&format=png&color=000000',
-            'furniture': 'https://img.icons8.com/?size=100&id=26166&format=png&color=000000',
-            'appliances': 'https://img.icons8.com/?size=100&id=24813&format=png&color=000000',
-            'sports': 'https://img.icons8.com/?size=100&id=37654&format=png&color=000000',
-            'tools': 'https://img.icons8.com/?size=100&id=87276&format=png&color=000000',
-            'clothing': 'https://img.icons8.com/?size=100&id=25080&format=png&color=000000',
-            'books': 'https://img.icons8.com/?size=100&id=19165&format=png&color=000000',
-            'others': 'https://img.icons8.com/?size=100&id=87276&format=png&color=000000'
-        };
-        return defaults[category?.toLowerCase()] || defaults['others'];
+        if (images && Array.isArray(images) && images.length > 0) {
+            return images[0];
+        }
+        return null;
     };
 
     const filterRequestsByStatus = (status) => {
@@ -113,6 +102,7 @@ const MyRentalRequests = () => {
             pending: filterRequestsByStatus('pending').length,
             approved: filterRequestsByStatus('approved').length,
             paid: filterRequestsByStatus('paid').length,
+            completed: filterRequestsByStatus('completed').length,
             denied: requests.filter(r => r.status === 'denied' || r.status === 'expired').length
         };
     };
@@ -125,13 +115,14 @@ const MyRentalRequests = () => {
                 pending: "No pending requests. Your requests will appear here while waiting for approval.",
                 approved: "No approved requests yet. Approved requests will show here with payment options.",
                 paid: "No paid requests yet. Completed payments will be shown here with receipts.",
+                completed: "No completed rentals yet. Finished rentals will appear here.",
                 denied: "No denied or expired requests. Requests that were declined or expired will appear here with reasons."
             };
 
             return (
                 <div className="empty-state">
                     <div className="empty-icon">
-                        {activeTab === 'pending' ? '⏳' : activeTab === 'approved' ? '✅' : activeTab === 'paid' ? '💳' : '❌'}
+                        {activeTab === 'pending' ? '⏳' : activeTab === 'approved' ? '✅' : activeTab === 'paid' ? '💳' : activeTab === 'completed' ? '🎉' : '❌'}
                     </div>
                     <h3>No {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Requests</h3>
                     <p>{emptyMessages[activeTab]}</p>
@@ -149,13 +140,25 @@ const MyRentalRequests = () => {
                 {filteredRequests.map(request => (
                     <div key={request.id} className="request-card">
                         <div className="request-image">
-                            <img
-                                src={getFirstImage(request.listing_images) || getDefaultImage(request.listing_category)}
-                                alt={request.listing_title}
-                                onError={(e) => {
-                                    e.target.src = getDefaultImage(request.listing_category);
-                                }}
-                            />
+                            {getFirstImage(request.listing_images) ? (
+                                <img
+                                    src={getFirstImage(request.listing_images)}
+                                    alt={request.listing_title}
+                                />
+                            ) : (
+                                <div style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    background: '#f3f4f6',
+                                    color: '#9ca3af',
+                                    fontSize: '12px'
+                                }}>
+                                    No image
+                                </div>
+                            )}
                             {getStatusBadge(request.status)}
                         </div>
 
@@ -250,6 +253,16 @@ const MyRentalRequests = () => {
                                     </button>
                                 )}
 
+                                {/* Rate after rental is completed */}
+                                {request.status === 'completed' && !request.rated && (
+                                    <button
+                                        className="rate-btn"
+                                        onClick={() => setRatingModal({ visible: true, request })}
+                                    >
+                                        ⭐ Rate Experience
+                                    </button>
+                                )}
+
                                 {/* Track delivery - show until user confirms receipt */}
                                 {request.status === 'paid' && request.delivery_option === 'delivery' && request.delivery_paid && !request.delivery_confirmed && (
                                     <button
@@ -260,18 +273,10 @@ const MyRentalRequests = () => {
                                     </button>
                                 )}
 
-                                {/* Rate after user confirms delivery */}
-                                {request.status === 'paid' && request.delivery_confirmed && !request.rated && (
-                                    <button
-                                        className="rate-btn"
-                                        onClick={() => setRatingModal({ visible: true, request })}
-                                    >
-                                        ⭐ Rate Experience
-                                    </button>
-                                )}
 
-                                {/* Initiate return after rental period and delivery confirmed */}
-                                {request.status === 'paid' && request.delivery_confirmed && !request.return_initiated && new Date() > new Date(request.end_date) && (
+
+                                {/* Initiate return after rental period and pickup/delivery confirmed */}
+                                {request.status === 'paid' && ((request.delivery_option === 'delivery' && request.delivery_confirmed) || (request.delivery_option === 'pickup' && request.pickup_confirmed_by_lister)) && !request.return_initiated && new Date() > new Date(request.end_date) && (
                                     <>
                                         <button
                                             className="initiate-return-btn"
@@ -284,7 +289,7 @@ const MyRentalRequests = () => {
                                             const now = new Date();
                                             const hoursPastEnd = (now - endDate) / (1000 * 60 * 60);
                                             const hoursRemaining = 36 - hoursPastEnd;
-                                            
+
                                             if (hoursRemaining > 0) {
                                                 return (
                                                     <div className="return-window-notice">
@@ -319,8 +324,15 @@ const MyRentalRequests = () => {
                                         className="confirm-return-btn"
                                         onClick={() => handleConfirmReturn(request.id)}
                                     >
-                                        ✅ Confirm Return Pickup
+                                        ✅ Confirm Self Return
                                     </button>
+                                )}
+
+                                {/* Show return status for self return */}
+                                {request.return_initiated && request.return_option === 'pickup' && request.return_confirmed_by_renter && (
+                                    <div className="return-completed">
+                                        <span className="status-badge delivered">✅ Self Return Completed</span>
+                                    </div>
                                 )}
 
                                 {request.status === 'approved' && request.payment_status === 'completed' && (
@@ -523,7 +535,7 @@ const MyRentalRequests = () => {
                     <div className="form-section">
                         <div className="tabs-container">
                             <div className="tabs">
-                                {['pending', 'approved', 'paid', 'denied'].map(tab => (
+                                {['pending', 'approved', 'paid', 'completed', 'denied'].map(tab => (
                                     <button
                                         key={tab}
                                         className={`tab ${activeTab === tab ? 'active' : ''}`}
@@ -632,22 +644,32 @@ const MyRentalRequests = () => {
                     isReturn={true}
                     onDeliveryChosen={async (option, cost, responseData) => {
                         setReturnModal({ visible: false, request: null });
-                        
-                        // If return delivery requires payment, show payment modal
-                        if (responseData.requiresPayment && cost > 0) {
-                            setReturnPaymentModal({ 
-                                visible: true, 
+
+                        // Check if late fee exists
+                        const lateFee = responseData.lateFee || 0;
+                        const hasLateFee = lateFee > 0;
+
+                        // For delivery return: always show payment modal if cost > 0
+                        // For pickup return: only show payment modal if late fee exists
+                        if (option === 'delivery' && (cost > 0 || hasLateFee)) {
+                            setReturnPaymentModal({
+                                visible: true,
                                 request: returnModal.request,
                                 cost: cost,
                                 lateFeeInfo: responseData
                             });
+                        } else if (option === 'pickup' && hasLateFee) {
+                            // Self return with late fee - show payment modal for late fee only
+                            setReturnPaymentModal({
+                                visible: true,
+                                request: returnModal.request,
+                                cost: 0, // No delivery cost for pickup
+                                lateFeeInfo: responseData,
+                                isLateFeeOnly: true
+                            });
                         } else {
-                            // No payment needed (pickup option)
-                            if (responseData.isLate) {
-                                showActionMessage('warning', `Return initiated with late fee of ₹${responseData.lateFee} (${responseData.daysLate} day${responseData.daysLate !== 1 ? 's' : ''} late)`);
-                            } else {
-                                showActionMessage('success', 'Return initiated successfully - within 36-hour window');
-                            }
+                            // No payment needed
+                            showActionMessage('success', 'Self return initiated successfully - within 36-hour window');
                             await fetchMyRequests();
                         }
                     }}
@@ -719,8 +741,8 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                             onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
                         >
                             <option value="card">Credit/Debit Card</option>
-                            <option value="paypal">PayPal</option>
-                            <option value="bank">Bank Transfer</option>
+                            <option value="upi">UPI</option>
+                            <option value="bank_transfer">Bank Transfer</option>
                         </select>
                     </div>
 
@@ -785,7 +807,7 @@ const PaymentModal = ({ request, onSubmit, onClose }) => {
                             className="btn btn-pay"
                             disabled={paymentData.processing}
                         >
-                            {paymentData.processing ? 'Processing...' : `Pay $${request.total_price}`}
+                            {paymentData.processing ? 'Processing...' : `Pay ₹${request.total_price}`}
                         </button>
                     </div>
                 </form>
@@ -875,7 +897,7 @@ const ReceiptModal = ({ request, onClose }) => {
 };
 
 // Delivery Payment Modal Component
-const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = false, lateFeeInfo = null }) => {
+const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = false, lateFeeInfo = null, isLateFeeOnly = false }) => {
     const [processing, setProcessing] = useState(false);
 
     const handlePayment = async () => {
@@ -884,13 +906,14 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = fa
             // Simulate payment processing
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            const endpoint = isReturn ? '/api/pay-return-delivery' : '/api/pay-delivery';
+            // For late fee only (self return), use a different endpoint
+            const endpoint = isLateFeeOnly ? '/api/pay-late-fee' : (isReturn ? '/api/pay-return-delivery' : '/api/pay-delivery');
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     requestId: request.id,
-                    transactionId: `${isReturn ? 'RETTXN' : 'DELVTXN'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+                    transactionId: `${isLateFeeOnly ? 'LATEFEE' : (isReturn ? 'RETTXN' : 'DELVTXN')}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                 })
             });
 
@@ -900,13 +923,14 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = fa
                 throw new Error('Payment failed');
             }
         } catch (error) {
-            console.error('Delivery payment error:', error);
+            console.error('Payment error:', error);
             alert('Payment failed. Please try again.');
             setProcessing(false);
         }
     };
 
-    const totalCost = isReturn && lateFeeInfo?.lateFee ? (parseFloat(cost) + parseFloat(lateFeeInfo.lateFee)).toFixed(2) : cost;
+    const lateFee = lateFeeInfo?.lateFee || 0;
+    const totalCost = isLateFeeOnly ? lateFee.toFixed(2) : (isReturn && lateFee > 0 ? (parseFloat(cost) + parseFloat(lateFee)).toFixed(2) : cost);
 
     return (
         <div className="modal-overlay">
@@ -917,15 +941,17 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = fa
                 </div>
 
                 <div className="payment-summary">
-                    <h4>{isReturn ? 'Return Delivery Payment' : 'Delivery Payment'}</h4>
+                    <h4>{isLateFeeOnly ? 'Late Fee Payment' : (isReturn ? 'Return Delivery Payment' : 'Delivery Payment')}</h4>
                     <p>{request.listing_title}</p>
                     <div className="price-breakdown-detail">
-                        <div className="breakdown-row">
-                            <span>{isReturn ? 'Return Delivery Cost:' : 'Delivery Cost:'}</span>
-                            <span>₹{cost}</span>
-                        </div>
-                        {isReturn && lateFeeInfo?.lateFee > 0 && (
-                            <div className="breakdown-row" style={{color: '#e74c3c'}}>
+                        {!isLateFeeOnly && (
+                            <div className="breakdown-row">
+                                <span>{isReturn ? 'Return Delivery Cost:' : 'Delivery Cost:'}</span>
+                                <span>₹{cost}</span>
+                            </div>
+                        )}
+                        {lateFeeInfo?.lateFee > 0 && (
+                            <div className="breakdown-row" style={{ color: '#e74c3c' }}>
                                 <span>Late Fee ({lateFeeInfo.daysLate} day{lateFeeInfo.daysLate !== 1 ? 's' : ''}):</span>
                                 <span>₹{lateFeeInfo.lateFee}</span>
                             </div>
@@ -935,6 +961,11 @@ const DeliveryPaymentModal = ({ request, cost, onClose, onSuccess, isReturn = fa
                             <strong>₹{totalCost}</strong>
                         </div>
                     </div>
+                    {isLateFeeOnly && (
+                        <p style={{ fontSize: '13px', color: '#666', marginTop: '10px' }}>
+                            ⚠️ You are returning after the 36-hour window. This late fee will be charged.
+                        </p>
+                    )}
                 </div>
 
                 <div className="modal-actions">

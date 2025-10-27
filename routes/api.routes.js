@@ -5,7 +5,6 @@ const router = express.Router();
 // API endpoint for user data (works for both Google and Phone users)
 router.get("/api/user", isLoggedIn, async (req, res) => {
   try {
-    console.log("API user request for:", req.user.id, req.user.name);
     
     const pool = require("../database");
     
@@ -238,8 +237,6 @@ router.post("/admin/fix-profile-pictures", async (req, res) => {
     const result = await pool.query(
       "SELECT * FROM phone_users WHERE profile_picture IS NULL"
     );
-
-    console.log(`Found ${result.rows.length} users with null profile pictures`);
 
     // Update each user
     for (const user of result.rows) {

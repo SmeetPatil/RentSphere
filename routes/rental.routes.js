@@ -127,7 +127,7 @@ router.get('/api/rentals', isLoggedIn, async (req, res) => {
             LEFT JOIN user_ratings ur ON l.user_id = ur.rated_user_id AND l.user_type = ur.rated_user_type
             LEFT JOIN rental_requests rr ON rr.listing_id = l.id
             LEFT JOIN delivery_ratings dr ON dr.request_id = rr.id
-            WHERE l.is_available = true
+            WHERE (l.is_available = true OR l.rental_status = 'rented')
         `;
         
         const queryParams = [];
@@ -203,8 +203,6 @@ router.post('/api/listings', isLoggedIn, async (req, res) => {
         const userId = req.user.id;
         // Determine user type based on the presence of google_id field
         const userType = req.user.google_id ? 'google' : 'phone';
-        
-        console.log('Create listing API - User ID:', userId, 'User Type:', userType, 'User Object:', req.user);
         
         // Validate required fields
         if (!category || !title || !description || !pricePerDay || !address || !latitude || !longitude) {
@@ -282,7 +280,6 @@ router.get('/api/my-listings', isLoggedIn, async (req, res) => {
         // Determine user type based on the presence of google_id field
         const userType = req.user.google_id ? 'google' : 'phone';
         
-        console.log('My-listings API - User ID:', userId, 'User Type:', userType, 'User Object:', req.user);
         
         const query = `
             SELECT 
@@ -359,7 +356,6 @@ router.get('/api/rentals/:id', isLoggedIn, async (req, res) => {
         const { id } = req.params;
         const { lat, lng } = req.query;
         
-        console.log('Rental details API - ID:', id, 'User Location:', lat, lng);
         
         if (!lat || !lng) {
             console.log('Missing location parameters');
@@ -393,11 +389,15 @@ router.get('/api/rentals/:id', isLoggedIn, async (req, res) => {
                 CASE
                     WHEN l.user_type = 'google' THEN u.created_at
                     WHEN l.user_type = 'phone' THEN pu.created_at
-                END as owner_member_since
+                END as owner_member_since,
+                CASE
+                    WHEN l.user_type = 'google' THEN u.last_active
+                    WHEN l.user_type = 'phone' THEN pu.last_active
+                END as owner_last_active
             FROM listings l
             LEFT JOIN users u ON l.user_id = u.id AND l.user_type = 'google'
             LEFT JOIN phone_users pu ON l.user_id = pu.id AND l.user_type = 'phone'
-            WHERE l.id = $1 AND l.is_available = true
+            WHERE l.id = $1 AND (l.is_available = true OR l.rental_status = 'rented')
         `;
         
         const listingResult = await pool.query(listingQuery, [id]);
@@ -428,7 +428,6 @@ router.get('/api/rentals/:id', isLoggedIn, async (req, res) => {
             });
         }
         
-        console.log('Distance check passed, proceeding with listing details');
         
         // Get owner ratings
         const ratingsQuery = `

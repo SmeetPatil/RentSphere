@@ -86,22 +86,7 @@ const MyListings = () => {
     });
   };
 
-  const getDefaultImage = (category) => {
-    const categoryImages = {
-      cameras: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=300&h=200&fit=crop',
-      drones: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=300&h=200&fit=crop',
-      headphones: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=200&fit=crop',
-      laptops: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=200&fit=crop',
-      tablets: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&h=200&fit=crop',
-      tv: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=300&h=200&fit=crop',
-      projectors: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop',
-      speakers: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=300&h=200&fit=crop',
-      'gaming consoles': 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=300&h=200&fit=crop',
-      controllers: 'https://images.unsplash.com/photo-1592840062661-eb5ad9746842?w=300&h=200&fit=crop'
-    };
-    
-    return categoryImages[category] || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=300&h=200&fit=crop';
-  };
+  // Removed placeholder images - only show actual uploaded images
 
   if (loading) {
     return (
@@ -170,17 +155,26 @@ const MyListings = () => {
                 {listings.map(listing => (
                   <div key={listing.id} className="my-listing-card">
                     <div className="listing-image-container" style={{ position: 'relative' }}>
-                      <img 
-                        src={listing.images && listing.images.length > 0 
-                          ? listing.images[0] 
-                          : getDefaultImage(listing.category)
-                        }
-                        alt={listing.title}
-                        className="listing-image"
-                        onError={(e) => {
-                          e.target.src = getDefaultImage(listing.category);
-                        }}
-                      />
+                      {listing.images && listing.images.length > 0 ? (
+                        <img 
+                          src={listing.images[0]}
+                          alt={listing.title}
+                          className="listing-image"
+                        />
+                      ) : (
+                        <div className="no-image-placeholder" style={{
+                          width: '100%',
+                          height: '200px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: '#f3f4f6',
+                          color: '#9ca3af',
+                          fontSize: '14px'
+                        }}>
+                          No image
+                        </div>
+                      )}
                       <div className={`availability-badge ${listing.is_available ? 'active' : 'inactive'}`}>
                         {listing.is_available ? 'Active' : 'Inactive'}
                       </div>

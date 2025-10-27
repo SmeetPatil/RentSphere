@@ -6,42 +6,78 @@ import RentalRequestForm from './RentalRequestForm';
 import './Rentals.css';
 
 // Image Gallery Component
-const ImageGallery = ({ images, title, category, getDefaultImage }) => {
+const ImageGallery = ({ images, title }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   
-  // Check if images exist and are valid (not empty strings)
+  // Only use actual uploaded images - NO placeholders
   const validImages = images && Array.isArray(images) 
     ? images.filter(img => img && typeof img === 'string' && img.trim() !== '') 
     : [];
   
-  const hasImages = validImages.length > 0;
-  const displayImages = hasImages ? validImages : [getDefaultImage(category)];
-  const currentImage = displayImages[currentImageIndex];
+  if (validImages.length === 0) {
+    return (
+      <div className="rental-images">
+        <div className="no-images-message" style={{
+          padding: '60px 20px',
+          textAlign: 'center',
+          background: '#f3f4f6',
+          borderRadius: '12px',
+          color: '#6b7280'
+        }}>
+          <p style={{ fontSize: '18px', marginBottom: '8px' }}>📷 No images available</p>
+          <p style={{ fontSize: '14px' }}>The owner hasn't uploaded any images yet</p>
+        </div>
+      </div>
+    );
+  }
+  
+  const currentImage = validImages[currentImageIndex];
+  
+  const handleImageLoad = (e) => {
+    setImageDimensions({
+      width: e.target.naturalWidth,
+      height: e.target.naturalHeight
+    });
+  };
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % displayImages.length);
+    setCurrentImageIndex((prev) => (prev + 1) % validImages.length);
   };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
+    setCurrentImageIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
   };
 
   return (
     <div className="rental-images">
       {/* Main Image */}
-      <div className="main-image-container" style={{ position: 'relative' }}>
+      <div className="main-image-container" style={{ 
+        position: 'relative',
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: '#f9fafb',
+        borderRadius: '12px',
+        overflow: 'hidden'
+      }}>
         <img 
           src={currentImage}
           alt={`${title} - View ${currentImageIndex + 1}`}
-          className="main-image"
-          onError={(e) => {
-            console.log('Main image failed to load:', currentImage);
-            e.target.src = getDefaultImage(category);
+          onLoad={handleImageLoad}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '600px',
+            width: 'auto',
+            height: 'auto',
+            objectFit: 'contain',
+            display: 'block'
           }}
         />
         
         {/* Navigation arrows for multiple images */}
-        {displayImages.length > 1 && (
+        {validImages.length > 1 && (
           <>
             <button
               onClick={prevImage}
@@ -102,14 +138,14 @@ const ImageGallery = ({ images, title, category, getDefaultImage }) => {
               fontSize: '14px',
               fontWeight: 'bold'
             }}>
-              {currentImageIndex + 1} / {displayImages.length}
+              {currentImageIndex + 1} / {validImages.length}
             </div>
           </>
         )}
       </div>
 
       {/* Thumbnail Gallery */}
-      {displayImages.length > 1 && (
+      {validImages.length > 1 && (
         <div className="thumbnail-gallery" style={{
           display: 'flex',
           gap: '10px',
@@ -117,19 +153,15 @@ const ImageGallery = ({ images, title, category, getDefaultImage }) => {
           overflowX: 'auto',
           padding: '10px 0'
         }}>
-          {displayImages.map((image, index) => (
+          {validImages.map((image, index) => (
             <img
               key={index}
               src={image}
               alt={`${title} - Thumbnail ${index + 1}`}
-              className="thumbnail-image"
               onClick={() => setCurrentImageIndex(index)}
-              onError={(e) => {
-                e.target.src = getDefaultImage(category);
-              }}
               style={{
-                width: '80px',
-                height: '60px',
+                width: '100px',
+                height: '75px',
                 objectFit: 'cover',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -150,6 +182,7 @@ const RentalDetail = () => {
   const [listing, setListing] = useState(null);
   const [ownerRating, setOwnerRating] = useState(null);
   const [deliveryRatings, setDeliveryRatings] = useState(null);
+  const [rentalRatings, setRentalRatings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -213,8 +246,9 @@ const RentalDetail = () => {
         setListing(response.data.listing);
         setOwnerRating(response.data.owner_rating);
         
-        // Fetch delivery ratings
+        // Fetch delivery ratings and rental ratings
         fetchDeliveryRatings();
+        fetchRentalRatings();
       } else {
         setError(response.data.message || 'Failed to load rental details');
       }
@@ -234,6 +268,17 @@ const RentalDetail = () => {
       }
     } catch (error) {
       console.error('Error fetching delivery ratings:', error);
+    }
+  };
+
+  const fetchRentalRatings = async () => {
+    try {
+      const response = await axios.get(`/api/listings/${id}/ratings`);
+      if (response.data.success) {
+        setRentalRatings(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching rental ratings:', error);
     }
   };
 
@@ -396,8 +441,6 @@ const RentalDetail = () => {
             <ImageGallery 
               images={listing.images} 
               title={listing.title}
-              category={listing.category}
-              getDefaultImage={getDefaultImage}
             />
 
             {/* Main Info */}
@@ -498,18 +541,50 @@ const RentalDetail = () => {
                       month: 'short'
                     })}
                   </div>
+                  {listing.owner_last_active && (
+                    <div className="owner-last-active">
+                      {(() => {
+                        const lastActive = new Date(listing.owner_last_active);
+                        const now = new Date();
+                        const diffMinutes = Math.floor((now - lastActive) / (1000 * 60));
+                        
+                        if (diffMinutes < 5) {
+                          return <span className="active-now">🟢 Active now</span>;
+                        } else if (diffMinutes < 60) {
+                          return <span className="active-recent">🟡 Active {diffMinutes}m ago</span>;
+                        } else if (diffMinutes < 1440) {
+                          const hours = Math.floor(diffMinutes / 60);
+                          return <span className="active-today">🟡 Active {hours}h ago</span>;
+                        } else {
+                          const days = Math.floor(diffMinutes / 1440);
+                          return <span className="active-days">⚪ Active {days}d ago</span>;
+                        }
+                      })()}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="contact-actions">
                 {!isOwnListing && (
-                  <button 
-                    onClick={handleRentNow}
-                    className="contact-btn primary rent-now-btn"
-                    style={{ marginBottom: '12px' }}
-                  >
-                    🚀 Rent Now
-                  </button>
+                  listing.rental_status === 'rented' ? (
+                    <button 
+                      className="contact-btn disabled currently-rented-btn"
+                      style={{ marginBottom: '12px' }}
+                      disabled
+                      title="This item is currently rented out"
+                    >
+                      🔒 Currently Rented
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={handleRentNow}
+                      className="contact-btn primary rent-now-btn"
+                      style={{ marginBottom: '12px' }}
+                    >
+                      🚀 Rent Now
+                    </button>
+                  )
                 )}
                 <Link 
                   to={`/messages/new?user=${listing.user_id}&type=${listing.user_type}&listing=${encodeURIComponent(listing.title)}`}
@@ -545,6 +620,101 @@ const RentalDetail = () => {
                       )}
                       <div className="review-date">
                         {new Date(review.created_at).toLocaleDateString('en-IN')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Rental Ratings */}
+            {rentalRatings && rentalRatings.summary.total_ratings > 0 && (
+              <div className="rental-ratings-section">
+                <h3>⭐ Rental Ratings</h3>
+                
+                <div className="rental-rating-summary">
+                  <div className="overall-rating">
+                    <div className="rating-value">{parseFloat(rentalRatings.summary.avg_overall).toFixed(1)}</div>
+                    <div className="rating-stars">
+                      {renderStars(Math.round(parseFloat(rentalRatings.summary.avg_overall)))}
+                    </div>
+                    <div className="rating-count">{rentalRatings.summary.total_ratings} ratings</div>
+                  </div>
+                  
+                  <div className="rating-breakdown">
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Item Quality</span>
+                      <div className="breakdown-bar">
+                        <div className="breakdown-fill" style={{width: `${(rentalRatings.summary.avg_item_quality / 5) * 100}%`}}></div>
+                      </div>
+                      <span className="breakdown-value">{parseFloat(rentalRatings.summary.avg_item_quality).toFixed(1)}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Functionality</span>
+                      <div className="breakdown-bar">
+                        <div className="breakdown-fill" style={{width: `${(rentalRatings.summary.avg_item_functionality / 5) * 100}%`}}></div>
+                      </div>
+                      <span className="breakdown-value">{parseFloat(rentalRatings.summary.avg_item_functionality).toFixed(1)}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Value for Money</span>
+                      <div className="breakdown-bar">
+                        <div className="breakdown-fill" style={{width: `${(rentalRatings.summary.avg_value_for_money / 5) * 100}%`}}></div>
+                      </div>
+                      <span className="breakdown-value">{parseFloat(rentalRatings.summary.avg_value_for_money).toFixed(1)}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Communication</span>
+                      <div className="breakdown-bar">
+                        <div className="breakdown-fill" style={{width: `${(rentalRatings.summary.avg_owner_communication / 5) * 100}%`}}></div>
+                      </div>
+                      <span className="breakdown-value">{parseFloat(rentalRatings.summary.avg_owner_communication).toFixed(1)}</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-label">Overall Experience</span>
+                      <div className="breakdown-bar">
+                        <div className="breakdown-fill" style={{width: `${(rentalRatings.summary.avg_overall_experience / 5) * 100}%`}}></div>
+                      </div>
+                      <span className="breakdown-value">{parseFloat(rentalRatings.summary.avg_overall_experience).toFixed(1)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="rental-ratings-list">
+                  {rentalRatings.ratings.slice(0, 5).map((rating) => (
+                    <div key={rating.id} className="rental-rating-item">
+                      <div className="rating-header">
+                        <img 
+                          src={rating.renter_picture || 'https://img.icons8.com/?size=100&id=7819&format=png&color=000000'}
+                          alt={rating.renter_name}
+                          className="rater-avatar"
+                        />
+                        <div className="rater-info">
+                          <div className="rater-name">{rating.renter_name}</div>
+                          <div className="rating-stars-small">
+                            {renderStars(rating.rental_rating)}
+                            <span className="rating-value-small">{rating.rental_rating}/5</span>
+                          </div>
+                        </div>
+                        <div className="rating-date">
+                          {new Date(rating.created_at).toLocaleDateString('en-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </div>
+                      
+                      {rating.detailed_review && (
+                        <p className="rating-comment">{rating.detailed_review}</p>
+                      )}
+                      
+                      <div className="rating-details">
+                        <span className="rating-detail-item">📦 Quality: {rating.item_quality}/5</span>
+                        <span className="rating-detail-item">⚙️ Function: {rating.item_functionality}/5</span>
+                        <span className="rating-detail-item">💰 Value: {rating.value_for_money}/5</span>
+                        <span className="rating-detail-item">💬 Communication: {rating.owner_communication}/5</span>
+                        <span className="rating-detail-item">🌟 Experience: {rating.overall_experience}/5</span>
                       </div>
                     </div>
                   ))}

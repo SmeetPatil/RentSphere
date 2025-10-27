@@ -59,7 +59,8 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
     const getStatusIcon = (status) => {
         switch(status) {
             case 'shipped': return '📦';
-            case 'en_route': return '🚚';
+            case 'en_route':
+            case 'in_transit': return '🚚';
             case 'delivered': return '✅';
             default: return '⏳';
         }
@@ -68,7 +69,8 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
     const getStatusColor = (status) => {
         switch(status) {
             case 'shipped': return '#3498db';
-            case 'en_route': return '#f39c12';
+            case 'en_route':
+            case 'in_transit': return '#f39c12';
             case 'delivered': return '#27ae60';
             default: return '#95a5a6';
         }
@@ -113,9 +115,10 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
             return `Arriving soon (within ${Math.ceil(remainingMinutes)} minutes)`;
         } else {
             const hours = Math.floor(remainingMinutes / 60);
-            const mins = Math.ceil(remainingMinutes % 60);
-            if (mins === 0) {
-                return `Estimated arrival in ${hours} ${hours === 1 ? 'hour' : 'hours'}`;
+            const mins = Math.round(remainingMinutes % 60);
+            if (mins === 0 || mins === 60) {
+                const totalHours = mins === 60 ? hours + 1 : hours;
+                return `Estimated arrival in ${totalHours} ${totalHours === 1 ? 'hour' : 'hours'}`;
             }
             return `Estimated arrival in ${hours}h ${mins}m`;
         }
@@ -188,7 +191,7 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
                             </div>
                             <div className="status-text">
                                 <h3 className="status-title">
-                                    {currentStatus ? currentStatus.replace('_', ' ').toUpperCase() : 'PENDING'}
+                                    {currentStatus === 'in_transit' ? 'IN TRANSIT' : (currentStatus ? currentStatus.replace('_', ' ').toUpperCase() : 'PENDING')}
                                 </h3>
                                 {estimatedTime && (
                                     <p className="estimated-time">⏱ {estimatedTime}</p>
@@ -209,7 +212,7 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
                     <div className="timeline-section">
                         <h4>Delivery Progress</h4>
                         <div className="tracking-timeline">
-                            <div className={`timeline-step ${currentStatus === 'shipped' || currentStatus === 'en_route' || currentStatus === 'delivered' ? 'completed' : 'pending'}`}>
+                            <div className={`timeline-step ${currentStatus === 'shipped' || currentStatus === 'en_route' || currentStatus === 'in_transit' || currentStatus === 'delivered' ? 'completed' : 'pending'}`}>
                                 <div className="timeline-marker">
                                     <div className="timeline-dot"></div>
                                     <div className="timeline-line"></div>
@@ -223,7 +226,7 @@ const DeliveryTracking = ({ requestId, isReturn = false, onClose }) => {
                                 </div>
                             </div>
 
-                            <div className={`timeline-step ${currentStatus === 'en_route' || currentStatus === 'delivered' ? 'completed' : 'pending'}`}>
+                            <div className={`timeline-step ${currentStatus === 'en_route' || currentStatus === 'in_transit' || currentStatus === 'delivered' ? 'completed' : 'pending'}`}>
                                 <div className="timeline-marker">
                                     <div className="timeline-dot"></div>
                                     <div className="timeline-line"></div>

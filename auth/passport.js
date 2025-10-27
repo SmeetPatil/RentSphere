@@ -17,9 +17,7 @@ passport.serializeUser(function (user, done) {
 
 passport.deserializeUser(async function (sessionData, done) {
   try {
-    let user;
-    console.log("Deserializing user:", sessionData); // Debug log
-
+    let user; // Debug log
     if (sessionData.type === "phone") {
       user = await findPhoneUserById(sessionData.id); // Added await
     } else {
@@ -27,9 +25,7 @@ passport.deserializeUser(async function (sessionData, done) {
         sessionData.id,
       ]);
       user = result.rows[0];
-    }
-
-    console.log("Deserialized user: {", user.id,user.name,"}"); // Debug log
+    }// Debug log
     done(null, user);
   } catch (error) {
     console.error("Deserialization error:", error);

@@ -3,18 +3,21 @@ import axios from 'axios';
 import './Rentals.css';
 
 const Rating = ({ request, onRatingSubmitted, onClose }) => {
-    const [rentalRating, setRentalRating] = useState(0);
-    const [listerRating, setListerRating] = useState(0);
-    const [rentalReview, setRentalReview] = useState('');
-    const [listerReview, setListerReview] = useState('');
-    const [hoveredRentalStar, setHoveredRentalStar] = useState(0);
-    const [hoveredListerStar, setHoveredListerStar] = useState(0);
+    const [ratings, setRatings] = useState({
+        itemQuality: 0,
+        itemFunctionality: 0,
+        valueForMoney: 0,
+        ownerCommunication: 0,
+        overallExperience: 0
+    });
+    const [review, setReview] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleSubmit = async () => {
-        if (rentalRating === 0 || listerRating === 0) {
-            setError('Please provide ratings for both the rental item and the lister');
+        const allRated = Object.values(ratings).every(r => r > 0);
+        if (!allRated) {
+            setError('Please provide all ratings');
             return;
         }
 
@@ -24,10 +27,12 @@ const Rating = ({ request, onRatingSubmitted, onClose }) => {
         try {
             await axios.post('/api/submit-rating', {
                 requestId: request.id,
-                rentalRating,
-                listerRating,
-                rentalReview: rentalReview.trim(),
-                listerReview: listerReview.trim()
+                itemQuality: ratings.itemQuality,
+                itemFunctionality: ratings.itemFunctionality,
+                valueForMoney: ratings.valueForMoney,
+                ownerCommunication: ratings.ownerCommunication,
+                overallExperience: ratings.overallExperience,
+                review: review.trim()
             });
 
             onRatingSubmitted();
@@ -38,33 +43,25 @@ const Rating = ({ request, onRatingSubmitted, onClose }) => {
         }
     };
 
-    const renderStars = (rating, hoveredStar, onHover, onClick) => {
+    const updateRating = (category, value) => {
+        setRatings(prev => ({ ...prev, [category]: value }));
+    };
+
+    const renderStars = (category, currentRating) => {
         return (
-            <div className="star-rating">
+            <div className="rating-stars">
                 {[1, 2, 3, 4, 5].map((star) => (
                     <span
                         key={star}
-                        className={`star ${star <= (hoveredStar || rating) ? 'filled' : ''}`}
-                        onMouseEnter={() => onHover(star)}
-                        onMouseLeave={() => onHover(0)}
-                        onClick={() => onClick(star)}
+                        className={`star ${star <= currentRating ? 'active' : ''}`}
+                        onClick={() => updateRating(category, star)}
+                        style={{ cursor: 'pointer', fontSize: '24px' }}
                     >
-                        ★
+                        {star <= currentRating ? '⭐' : '☆'}
                     </span>
                 ))}
             </div>
         );
-    };
-
-    const getRatingLabel = (rating) => {
-        switch(rating) {
-            case 1: return 'Poor';
-            case 2: return 'Fair';
-            case 3: return 'Good';
-            case 4: return 'Very Good';
-            case 5: return 'Excellent';
-            default: return 'Select rating';
-        }
     };
 
     return (
@@ -72,88 +69,56 @@ const Rating = ({ request, onRatingSubmitted, onClose }) => {
             <div className="modal-content rating-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="modal-close" onClick={onClose}>×</button>
                 
-                <h2>⭐ Rate Your Experience</h2>
-                <p className="modal-subtitle">Help others make informed decisions</p>
+                <h2>⭐ Rate Your Rental Experience</h2>
+                <p className="modal-subtitle">Your detailed feedback helps our community</p>
 
                 {error && <div className="error-message">{error}</div>}
 
                 <div className="rating-sections">
-                    {/* Rental Item Rating */}
                     <div className="rating-section">
-                        <div className="rating-header">
-                            <h3>📦 Rate the Rental Item</h3>
-                            <p className="rating-label">{getRatingLabel(hoveredRentalStar || rentalRating)}</p>
-                        </div>
-                        
-                        {renderStars(
-                            rentalRating,
-                            hoveredRentalStar,
-                            setHoveredRentalStar,
-                            setRentalRating
-                        )}
-
-                        <div className="form-group">
-                            <label htmlFor="rentalReview">
-                                Share your thoughts about the rental item (Optional)
-                            </label>
-                            <textarea
-                                id="rentalReview"
-                                value={rentalReview}
-                                onChange={(e) => setRentalReview(e.target.value)}
-                                placeholder="How was the condition of the item? Did it meet your expectations? Any issues?"
-                                rows="4"
-                                maxLength="500"
-                            />
-                            <span className="char-count">{rentalReview.length}/500</span>
-                        </div>
+                        <h4>📦 Item Quality/Condition</h4>
+                        <p style={{fontSize: '13px', color: '#666', marginBottom: '8px'}}>Was the item in good condition?</p>
+                        {renderStars('itemQuality', ratings.itemQuality)}
                     </div>
 
-                    {/* Divider */}
-                    <div className="rating-divider"></div>
-
-                    {/* Lister Rating */}
                     <div className="rating-section">
-                        <div className="rating-header">
-                            <h3>👤 Rate the Lister</h3>
-                            <p className="rating-label">{getRatingLabel(hoveredListerStar || listerRating)}</p>
-                        </div>
-                        
-                        {renderStars(
-                            listerRating,
-                            hoveredListerStar,
-                            setHoveredListerStar,
-                            setListerRating
-                        )}
+                        <h4>⚙️ Item Functionality</h4>
+                        <p style={{fontSize: '13px', color: '#666', marginBottom: '8px'}}>Did everything work as expected?</p>
+                        {renderStars('itemFunctionality', ratings.itemFunctionality)}
+                    </div>
 
-                        <div className="form-group">
-                            <label htmlFor="listerReview">
-                                Share your thoughts about the lister (Optional)
-                            </label>
-                            <textarea
-                                id="listerReview"
-                                value={listerReview}
-                                onChange={(e) => setListerReview(e.target.value)}
-                                placeholder="How was the communication? Were they helpful? Would you rent from them again?"
-                                rows="4"
-                                maxLength="500"
-                            />
-                            <span className="char-count">{listerReview.length}/500</span>
-                        </div>
+                    <div className="rating-section">
+                        <h4>💰 Value for Money</h4>
+                        <p style={{fontSize: '13px', color: '#666', marginBottom: '8px'}}>Was it worth the rental price?</p>
+                        {renderStars('valueForMoney', ratings.valueForMoney)}
+                    </div>
+
+                    <div className="rating-section">
+                        <h4>💬 Owner Communication</h4>
+                        <p style={{fontSize: '13px', color: '#666', marginBottom: '8px'}}>How responsive and helpful was the owner?</p>
+                        {renderStars('ownerCommunication', ratings.ownerCommunication)}
+                    </div>
+
+                    <div className="rating-section">
+                        <h4>🌟 Overall Experience</h4>
+                        <p style={{fontSize: '13px', color: '#666', marginBottom: '8px'}}>How would you rate your overall experience?</p>
+                        {renderStars('overallExperience', ratings.overallExperience)}
+                    </div>
+
+                    <div className="rating-section">
+                        <h4>💭 Detailed Review (Optional)</h4>
+                        <textarea
+                            value={review}
+                            onChange={(e) => setReview(e.target.value)}
+                            placeholder="Share your experience in detail... What did you like? Any suggestions for improvement?"
+                            rows="4"
+                            maxLength="500"
+                            style={{width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd'}}
+                        />
+                        <span className="char-count">{review.length}/500</span>
                     </div>
                 </div>
 
-                {/* Guidelines */}
-                <div className="rating-guidelines">
-                    <h4>📝 Rating Guidelines</h4>
-                    <ul>
-                        <li>Be honest and constructive in your feedback</li>
-                        <li>Focus on the rental experience and item quality</li>
-                        <li>Avoid personal attacks or inappropriate language</li>
-                        <li>Your ratings help build trust in our community</li>
-                    </ul>
-                </div>
-
-                {/* Action Buttons */}
                 <div className="modal-actions">
                     <button className="btn-secondary" onClick={onClose} disabled={loading}>
                         Cancel
@@ -161,7 +126,7 @@ const Rating = ({ request, onRatingSubmitted, onClose }) => {
                     <button 
                         className="btn-primary" 
                         onClick={handleSubmit}
-                        disabled={loading || rentalRating === 0 || listerRating === 0}
+                        disabled={loading || Object.values(ratings).some(r => r === 0)}
                     >
                         {loading ? 'Submitting...' : 'Submit Rating'}
                     </button>

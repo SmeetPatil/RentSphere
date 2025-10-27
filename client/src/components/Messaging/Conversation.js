@@ -12,8 +12,6 @@ const Conversation = ({ user }) => {
   const [otherUser, setOtherUser] = useState(null);
   const messagesEndRef = useRef(null);
 
-  // Debug user object
-  console.log('Conversation component - User object:', user);
 
   // Fetch messages
   useEffect(() => {
@@ -104,8 +102,6 @@ const Conversation = ({ user }) => {
                       
                       // Compare both sender_id and sender_type
                       const isCurrentUser = message.sender_id === user?.id && message.sender_type === currentUserType;
-                      
-                      console.log('Debug - Message ID:', message.id, 'Sender ID:', message.sender_id, 'Sender Type:', message.sender_type, 'User ID:', user?.id, 'User Type:', currentUserType, 'Is Current User:', isCurrentUser, 'Sender Name:', message.sender_name);
                       
                       const messageStyle = {
                         display: 'flex',

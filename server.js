@@ -38,6 +38,10 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Update last active timestamp for logged-in users
+const updateLastActive = require('./middleware/updateLastActive');
+app.use(updateLastActive);
+
 // API ROUTES FIRST (before static files)
 app.use("/", pageRoutes); // Page routes
 app.use("/", apiRoutes); // API routes
@@ -378,4 +382,8 @@ const port = process.env.PORT || 8085;
 // Start server and run migrations
 app.listen(port, async () => {
   console.log("RentSphere is running on port : " + port);
+  
+  // Start delivery simulation cron job
+  const { startDeliverySimulationCron } = require('./services/deliverySimulationService');
+  startDeliverySimulationCron();
 });
