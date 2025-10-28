@@ -294,6 +294,7 @@
 
 /* Request Card Styles */
 .request-card {
+    scale: 0.70;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border-radius: 16px;
     padding: 25px;
@@ -1086,4 +1087,18 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(255, 152, 0, 0.5);
     background: linear-gradient(135deg, #f57c00 0%, #ef6c00 100%);
+}
+
+.track-delivery-btn{
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.track-delivery-btn:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    color: #333;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

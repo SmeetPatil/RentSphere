@@ -561,7 +561,7 @@
     box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-.view-receipt-btn {
+.view-receipt-btn{
     background: linear-gradient(135deg, #6c757d, #5a6268);
     color: white;
 }
@@ -572,13 +572,13 @@
     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
 }
 
-.view-listing-btn {
+.view-listing-btn, .track-delivery-btn{
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     color: #495057;
     border: 1px solid #dee2e6;
 }
 
-.view-listing-btn:hover {
+.view-listing-btn:hover,  .track-delivery-btn:hover {
     background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
     color: #333;
     text-decoration: none;

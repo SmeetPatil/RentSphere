@@ -201,18 +201,6 @@ function LoginPage() {
           </svg>
           Continue with Phone
         </a>
-
-        <div className="features">
-          <h3>Why Choose RentSphere?</h3>
-          <ul className="feature-list">
-            <li>Browse thousands of verified rentals</li>
-            <li>Direct contact with renters</li>
-            <li>Advanced search and filtering</li>
-            <li>Save your favorite listings</li>
-            <li>Get instant notifications</li>
-          </ul>
-        </div>
-
         <div className="footer">Secure login powered by Google OAuth</div>
       </div>
     </div>
