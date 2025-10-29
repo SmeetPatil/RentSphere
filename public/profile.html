@@ -214,6 +214,61 @@
             color: #666;
         }
 
+        .kyc-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .kyc-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .kyc-badge.verified {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .kyc-badge.rejected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .kyc-info {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .kyc-info p {
+            margin: 0;
+            color: #0c4a6e;
+            font-size: 0.95rem;
+        }
+
+        .kyc-success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            color: #065f46;
+        }
+
+        .kyc-error {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+            color: #991b1b;
+        }
+
         @media (max-width: 768px) {
             .nav-container {
                 padding: 0 1rem;
@@ -313,6 +368,35 @@
                             <span class="detail-value" id="displayMemberSince">-</span>
                         </div>
                     </div>
+
+                    <div class="detail-section" id="kycSection">
+                        <h3>
+                            KYC Verification
+                            <span id="kycBadge" class="kyc-badge">Pending</span>
+                        </h3>
+                        <div id="kycContent">
+                            <div class="kyc-info">
+                                <p id="kycMessage">Complete KYC verification to list items and rent from others.</p>
+                            </div>
+                            <div id="kycDetails" style="display: none;">
+                                <div class="detail-item">
+                                    <span class="detail-label">Verification Status</span>
+                                    <span class="detail-value" id="kycStatusText">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Verified On</span>
+                                    <span class="detail-value" id="kycVerifiedDate">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Document Type</span>
+                                    <span class="detail-value">Aadhaar (via DigiLocker)</span>
+                                </div>
+                            </div>
+                            <button id="kycButton" class="btn" onclick="initiateKYC()" style="margin-top: 1rem;">
+                                Verify with DigiLocker
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -320,6 +404,37 @@
 
     <script>
         let currentUser = null;
+        let kycStatus = null;
+
+        // Check for KYC callback parameters
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const kycResult = urlParams.get('kyc');
+            const message = urlParams.get('message');
+
+            if (kycResult === 'success') {
+                showKYCMessage('KYC verification successful! Your profile is now verified.', 'success');
+                // Clean URL
+                window.history.replaceState({}, document.title, '/profile');
+            } else if (kycResult === 'error') {
+                showKYCMessage('KYC verification failed: ' + (message || 'Unknown error'), 'error');
+                // Clean URL
+                window.history.replaceState({}, document.title, '/profile');
+            }
+        });
+
+        function showKYCMessage(message, type) {
+            const kycContent = document.getElementById('kycContent');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'kyc-success' : 'kyc-error';
+            messageDiv.textContent = message;
+            kycContent.insertBefore(messageDiv, kycContent.firstChild);
+
+            // Reload user data to update KYC status
+            setTimeout(() => {
+                loadUserData();
+            }, 1000);
+        }
 
         // Load user data
         async function loadUserData() {
@@ -328,6 +443,7 @@
                 if (response.ok) {
                     currentUser = await response.json();
                     updateProfileDisplay(currentUser);
+                    await loadKYCStatus();
                     document.getElementById('loadingState').style.display = 'none';
                     document.getElementById('profileContent').style.display = 'block';
                 } else if (response.status === 401) {
@@ -488,6 +604,87 @@
             const phoneRegex = /^\+?91?[6-9]\d{9}$/;
             const cleanPhone = phone.replace(/\D/g, '');
             return cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone);
+        }
+
+        // Load KYC status
+        async function loadKYCStatus() {
+            try {
+                const response = await fetch('/api/kyc/status');
+                if (response.ok) {
+                    kycStatus = await response.json();
+                    updateKYCDisplay(kycStatus);
+                }
+            } catch (error) {
+                console.error('Error loading KYC status:', error);
+            }
+        }
+
+        // Update KYC display
+        function updateKYCDisplay(status) {
+            const kycBadge = document.getElementById('kycBadge');
+            const kycMessage = document.getElementById('kycMessage');
+            const kycDetails = document.getElementById('kycDetails');
+            const kycButton = document.getElementById('kycButton');
+            const kycStatusText = document.getElementById('kycStatusText');
+            const kycVerifiedDate = document.getElementById('kycVerifiedDate');
+
+            // Update badge
+            kycBadge.className = 'kyc-badge';
+            if (status.verified) {
+                kycBadge.textContent = '✓ Verified';
+                kycBadge.classList.add('verified');
+                kycMessage.textContent = 'Your profile is verified. You can now list items and rent from others.';
+                kycButton.style.display = 'none';
+                kycDetails.style.display = 'block';
+                
+                kycStatusText.textContent = 'Verified';
+                if (status.details && status.details.kyc_verified_at) {
+                    kycVerifiedDate.textContent = new Date(status.details.kyc_verified_at).toLocaleDateString();
+                }
+            } else if (status.status === 'rejected') {
+                kycBadge.textContent = '✗ Rejected';
+                kycBadge.classList.add('rejected');
+                kycMessage.textContent = 'Your KYC verification was rejected. Please contact support.';
+                kycButton.style.display = 'none';
+            } else {
+                kycBadge.textContent = '⏳ Pending';
+                kycBadge.classList.add('pending');
+                kycMessage.textContent = 'Complete KYC verification to list items and rent from others.';
+                kycButton.style.display = 'block';
+                kycButton.textContent = 'Verify with DigiLocker';
+            }
+        }
+
+        // Initiate KYC verification
+        async function initiateKYC() {
+            const kycButton = document.getElementById('kycButton');
+            kycButton.disabled = true;
+            kycButton.textContent = 'Initiating...';
+
+            try {
+                const response = await fetch('/api/kyc/initiate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.authUrl) {
+                    // Redirect to DigiLocker
+                    window.location.href = result.authUrl;
+                } else {
+                    alert('Failed to initiate KYC: ' + (result.message || 'Unknown error'));
+                    kycButton.disabled = false;
+                    kycButton.textContent = 'Verify with DigiLocker';
+                }
+            } catch (error) {
+                console.error('Error initiating KYC:', error);
+                alert('Failed to initiate KYC verification. Please try again.');
+                kycButton.disabled = false;
+                kycButton.textContent = 'Verify with DigiLocker';
+            }
         }
 
         // Initialize page

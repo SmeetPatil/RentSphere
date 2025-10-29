@@ -1138,3 +1138,61 @@ MIT License - see [LICENSE](LICENSE) file
 **Last Updated:** December 2024
 **Version:** 1.0.0
 ````
+
+
+## KYC Verification System
+
+### Overview
+
+KYC (Know Your Customer) verification using DigiLocker integration. All users must complete KYC verification to list items and rent from others.
+
+### Implementation
+
+**Backend:**
+- `services/digilockerService.js` - DigiLocker OAuth and Aadhaar verification
+- `routes/kyc.routes.js` - KYC API endpoints
+- `middleware/kycCheck.js` - Route protection middleware
+- `setup/kyc-schema.sql` - Database schema for KYC data
+
+**Frontend:**
+- Updated Profile components in `client/` and `client_new/`
+- KYC status badges and verification UI
+- DigiLocker integration flow
+
+### API Endpoints
+
+- `GET /api/kyc/status` - Check verification status
+- `POST /api/kyc/initiate` - Start DigiLocker flow
+- `GET /api/kyc/digilocker/callback` - OAuth callback
+- `GET /setup-kyc-tables` - Database setup
+
+### Configuration
+
+Add to `.env`:
+```
+DIGILOCKER_CLIENT_ID=your_client_id
+DIGILOCKER_CLIENT_SECRET=your_client_secret
+DIGILOCKER_MOCK_MODE=true
+```
+
+### Database Schema
+
+Added to `users` and `phone_users` tables:
+- `kyc_verified` - Verification status
+- `kyc_status` - pending/verified/rejected
+- `kyc_verified_at` - Verification timestamp
+- `kyc_document_type` - Document type (aadhaar)
+- `kyc_document_number` - Masked number
+- `kyc_name`, `kyc_dob`, `kyc_address` - Verified details
+
+New table `kyc_verification_logs` for audit trail.
+
+### Usage
+
+1. Run setup: `GET /setup-kyc-tables`
+2. User clicks "Verify with DigiLocker" on Profile page
+3. Completes DigiLocker authentication
+4. System stores verified Aadhaar data
+5. User can now list items and rent
+
+Mock mode available for testing without DigiLocker credentials.

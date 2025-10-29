@@ -43,6 +43,9 @@ router.get("/api/user", isLoggedIn, async (req, res) => {
       phone: userPhone || additionalPhone,
       profilePicture: req.user.profile_picture || req.user.profilePicture,
       memberSince: req.user.created_at,
+      kycVerified: req.user.kyc_verified || false,
+      kycStatus: req.user.kyc_status || 'pending',
+      kycVerifiedAt: req.user.kyc_verified_at || null,
     });
     
   } catch (error) {
@@ -329,7 +332,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return R * c; // Distance in kilometers
 }
 
-// Get nearby rentals based on user location
+// Get nearby rentals based on user location (public endpoint)
 router.get("/api/nearby-rentals", async (req, res) => {
   try {
     const { latitude, longitude, limit = 10 } = req.query;
@@ -359,7 +362,8 @@ router.get("/api/nearby-rentals", async (req, res) => {
       SELECT 
         l.*,
         COALESCE(u.name, pu.name) as user_name,
-        COALESCE(u.profile_picture, pu.profile_picture) as user_profile_picture
+        COALESCE(u.profile_picture, pu.profile_picture) as user_profile_picture,
+        COALESCE(u.kyc_verified, pu.kyc_verified) as user_kyc_verified
       FROM listings l
       LEFT JOIN users u ON l.user_type = 'google' AND l.user_id = u.id
       LEFT JOIN phone_users pu ON l.user_type = 'phone' AND l.user_id = pu.id
@@ -409,7 +413,7 @@ router.get("/api/nearby-rentals", async (req, res) => {
   }
 });
 
-// Get featured/recent rentals
+// Get featured/recent rentals (public endpoint)
 router.get("/api/featured-rentals", async (req, res) => {
   try {
     const { limit = 12 } = req.query;
@@ -422,7 +426,8 @@ router.get("/api/featured-rentals", async (req, res) => {
       SELECT 
         l.*,
         COALESCE(u.name, pu.name) as user_name,
-        COALESCE(u.profile_picture, pu.profile_picture) as user_profile_picture
+        COALESCE(u.profile_picture, pu.profile_picture) as user_profile_picture,
+        COALESCE(u.kyc_verified, pu.kyc_verified) as user_kyc_verified
       FROM listings l
       LEFT JOIN users u ON l.user_type = 'google' AND l.user_id = u.id
       LEFT JOIN phone_users pu ON l.user_type = 'phone' AND l.user_id = pu.id

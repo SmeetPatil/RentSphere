@@ -28,25 +28,61 @@
   font-size: 0.95rem;
 }
 
-/* Black Circle Pin Styles - Clean and Simple */
-[class^="custom-black-pin-"] {
+/* Custom Pin Icon - Pure CSS Approach */
+.custom-pin-icon {
   background: transparent !important;
   border: none !important;
-  box-shadow: none !important;
-  width: 45px !important;
-  height: 45px !important;
 }
 
-[class^="custom-black-pin-"] > div:first-child {
-  transition: all 0.3s ease !important;
-  cursor: pointer !important;
+.custom-map-pin {
+  position: relative;
+  width: 40px;
+  height: 50px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
 }
 
-[class^="custom-black-pin-"] > div:first-child:hover {
-  transform: scale(1.15);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7) !important;
-  background-color: #1a1a1a !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
+.custom-map-pin:hover {
+  transform: scale(1.1);
+}
+
+/* Pin head - the circular top part */
+.pin-head {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 36px;
+  background: #000000;
+  border: 3px solid #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+/* Pin tail - the pointed bottom part */
+.pin-tail {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 20px solid #000000;
+  z-index: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.pin-emoji {
+  font-size: 20px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
 }
 
 /* Override any Leaflet default styles */
@@ -75,9 +111,12 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.1);
   }
@@ -297,8 +336,13 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .map-loading p {
@@ -366,32 +410,45 @@
   .nearby-map-section {
     padding: 40px 15px;
   }
-  
+
   .map-container-wrapper {
     border-radius: 12px;
   }
-  
+
   .map-container-wrapper .leaflet-container {
     height: 300px !important;
   }
-  
+
   .rental-tooltip-content {
     width: 180px !important;
   }
-  
+
   .tooltip-img {
     height: 100px !important;
   }
-  
-  .black-circle-pin {
-    width: 40px;
+
+  .custom-map-pin {
+    width: 32px;
     height: 40px;
   }
-  
-  .pin-emoji {
-    font-size: 20px;
+
+  .pin-head {
+    width: 28px;
+    height: 28px;
+    border-width: 2px;
   }
-  
+
+  .pin-tail {
+    top: 24px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 16px solid #000000;
+  }
+
+  .pin-emoji {
+    font-size: 16px;
+  }
+
   /* Switch tooltip to top direction on mobile to prevent right-side cutoff */
   .leaflet-tooltip-right {
     margin-left: 0 !important;
@@ -402,22 +459,35 @@
   .section-title {
     font-size: 1.5rem;
   }
-  
+
   .section-subtitle {
     font-size: 0.9rem;
   }
-  
+
   .map-notice {
     font-size: 0.85rem;
     padding: 10px 12px;
   }
-  
-  .black-circle-pin {
-    width: 35px;
-    height: 35px;
+
+  .custom-map-pin {
+    width: 28px;
+    height: 36px;
   }
-  
+
+  .pin-head {
+    width: 24px;
+    height: 24px;
+    border-width: 2px;
+  }
+
+  .pin-tail {
+    top: 20px;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 14px solid #000000;
+  }
+
   .pin-emoji {
-    font-size: 18px;
+    font-size: 14px;
   }
 }

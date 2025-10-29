@@ -520,7 +520,15 @@ const RentalDetail = () => {
                   className="owner-avatar-large"
                 />
                 <div className="owner-details">
-                  <div className="owner-name">{listing.owner_name}</div>
+                  <div className="owner-name">
+                    {listing.owner_name}
+                    {listing.owner_kyc_verified && (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{marginLeft:'0.35rem',verticalAlign:'middle',display:'inline-block'}} title="Verified User">
+                        <circle cx="12" cy="12" r="10" fill="#10b981"/>
+                        <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
                   <div className="owner-rating">
                     {ownerRating && ownerRating.average > 0 ? (
                       <>

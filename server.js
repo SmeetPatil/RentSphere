@@ -14,6 +14,7 @@ const rentalRoutes = require("./routes/rental.routes");
 const imageRoutes = require("./routes/image.routes");
 const rentalRequestsRoutes = require("./routes/rental-requests.routes");
 const deliveryRatingRoutes = require("./routes/delivery-rating.routes");
+const kycRoutes = require("./routes/kyc.routes");
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use("/", rentalRoutes); // Rental routes
 app.use("/", imageRoutes); // Image upload routes
 app.use("/", rentalRequestsRoutes); // Rental requests routes
 app.use("/api", deliveryRatingRoutes); // Delivery and rating routes
+app.use("/", kycRoutes); // KYC verification routes
 
 // STATIC FILES AFTER API ROUTES (so API routes take priority)
 // Serve static files from public directory (legacy HTML files)

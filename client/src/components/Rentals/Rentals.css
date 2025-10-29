@@ -184,6 +184,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0;
+  overflow: visible;
 }
 
 .listing-title {
@@ -192,6 +194,9 @@
   color: #333;
   margin-bottom: 8px;
   line-height: 1.3;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .listing-price {
@@ -215,6 +220,8 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+  min-width: 0;
+  overflow: visible;
 }
 
 .owner-avatar {
@@ -226,12 +233,21 @@
 
 .owner-info {
   flex: 1;
+  min-width: 0;
+  overflow: visible;
 }
 
 .owner-name {
   font-size: 14px;
   font-weight: 500;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .owner-rating {
@@ -240,6 +256,8 @@
   gap: 5px;
   font-size: 12px;
   color: #666;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .rating-stars {
@@ -749,6 +767,8 @@
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  z-index: 10;
+  pointer-events: none;
 }
 
 .availability-badge.active {
@@ -1102,18 +1122,29 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  overflow: visible;
 }
 
 .owner-name {
   font-size: 18px;
   font-weight: 600;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .owner-rating {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .rating-stars {
@@ -1605,6 +1636,8 @@ ge Gallery Styles */
   font-size: 12px;
   font-weight: bold;
   backdrop-filter: blur(4px);
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* Responsive image gallery */
@@ -2907,6 +2940,7 @@ ge Gallery Styles */
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 50px;
 }
 
 .breakdown-item {
@@ -3007,12 +3041,12 @@ ge Gallery Styles */
 
 .delivery-rating-item .rating-comment {
   margin: 12px 0;
-  color: #555;
+  color: black !important;
   font-size: 14px;
   line-height: 1.6;
   font-style: italic;
-  background: transparent;
-  border: none;
+  background: solid;
+  border: 1.2px black;
   padding: 0;
 }
 

@@ -89,7 +89,15 @@ const ListingCard = ({ listing }) => {
             className="owner-avatar"
           />
           <div className="owner-info">
-            <div className="owner-name">{listing.owner_name}</div>
+            <div className="owner-name">
+              {listing.owner_name}
+              {listing.owner_kyc_verified && (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{marginLeft:'0.35rem',verticalAlign:'middle',display:'inline-block'}} title="Verified User">
+                  <circle cx="12" cy="12" r="10" fill="#10b981"/>
+                  <path d="M9 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
             <div className="owner-rating">
               <span className="rating-stars">
                 {parseFloat(listing.owner_rating) > 0 ? renderStars(parseFloat(listing.owner_rating)) : '⭐'}

@@ -40,7 +40,7 @@ function App() {
     } else {
       document.body.classList.remove('navbar-active');
     }
-    
+
     // Cleanup on unmount
     return () => {
       document.body.classList.remove('navbar-active');
@@ -101,7 +101,7 @@ function App() {
         <AnimatedBackground />
         {/* Show Navbar for authenticated users */}
         {user && <Navbar user={user} />}
-        
+
         <Routes>
           <Route
             path="/login"
@@ -594,6 +594,55 @@ function Profile({ user, setUser }) {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [kycLoading, setKycLoading] = useState(false);
+
+  const checkKYCCallback = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const kycResult = urlParams.get('kyc');
+    const kycMessage = urlParams.get('message');
+
+    if (kycResult === 'success') {
+      setMessage('✓ KYC verification successful! Your profile is now verified.');
+      window.history.replaceState({}, document.title, '/profile');
+      // Reload user data to get updated KYC status
+      setTimeout(async () => {
+        try {
+          const response = await axios.get('/api/user');
+          if (response.data) {
+            setUser(response.data);
+          }
+        } catch (error) {
+          console.error('Error reloading user:', error);
+        }
+      }, 1000);
+    } else if (kycResult === 'error') {
+      setMessage('✗ KYC verification failed: ' + (kycMessage || 'Unknown error'));
+      window.history.replaceState({}, document.title, '/profile');
+    }
+  };
+
+  // Load KYC status on mount
+  useEffect(() => {
+    console.log('Profile user object:', user);
+    console.log('KYC Verified:', user.kycVerified);
+    checkKYCCallback();
+  }, [checkKYCCallback, user]);
+
+  const initiateKYC = async () => {
+    setKycLoading(true);
+    try {
+      const response = await axios.post('/api/kyc/initiate');
+      if (response.data.success && response.data.authUrl) {
+        window.location.href = response.data.authUrl;
+      } else {
+        setMessage('Failed to initiate KYC: ' + (response.data.message || 'Unknown error'));
+      }
+    } catch (error) {
+      setMessage('Failed to initiate KYC verification. Please try again.');
+    } finally {
+      setKycLoading(false);
+    }
+  };
 
   const getMembershipDuration = () => {
     if (!user.memberSince) return "New Member";
@@ -673,7 +722,33 @@ function Profile({ user, setUser }) {
               className="profile-avatar"
             />
             <div className="profile-info">
-              <h1>{user.name}</h1>
+              <h1>
+                {user.name}
+                {user.kycVerified && (
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={{
+                      marginLeft: '0.5rem',
+                      verticalAlign: 'middle',
+                      display: 'inline-block'
+                    }}
+                    title="Verified User"
+                  >
+                    <circle cx="12" cy="12" r="10" fill="#10b981" />
+                    <path
+                      d="M9 12l2 2 4-4"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </h1>
               <p>{user.email || user.phone}</p>
               <p className="member-since">
                 Member since {getMembershipDuration()}
@@ -802,6 +877,60 @@ function Profile({ user, setUser }) {
                     : "Not available"}
                 </span>
               </div>
+            </div>
+
+            <div className="detail-section kyc-section">
+              <h3>
+                KYC Verification
+                <span className={`kyc-badge ${user.kycVerified ? 'verified' : user.kycStatus === 'rejected' ? 'rejected' : 'pending'}`}>
+                  {user.kycVerified ? '✓ Verified' : user.kycStatus === 'rejected' ? '✗ Rejected' : '⏳ Pending'}
+                </span>
+              </h3>
+
+              <div className="kyc-info-box">
+                {user.kycVerified ? (
+                  <p className="kyc-success-text">
+                    ✓ Your profile is verified. You can now list items and rent from others.
+                  </p>
+                ) : user.kycStatus === 'rejected' ? (
+                  <p className="kyc-error-text">
+                    Your KYC verification was rejected. Please contact support.
+                  </p>
+                ) : (
+                  <p className="kyc-warning-text">
+                    ⚠️ Complete KYC verification to list items and rent from others.
+                  </p>
+                )}
+              </div>
+
+              {user.kycVerified ? (
+                <div className="kyc-details">
+                  <div className="detail-item">
+                    <span className="detail-label">Verification Status</span>
+                    <span className="detail-value">Verified</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Verified On</span>
+                    <span className="detail-value">
+                      {user.kycVerifiedAt
+                        ? new Date(user.kycVerifiedAt).toLocaleDateString()
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Document Type</span>
+                    <span className="detail-value">Aadhaar (via DigiLocker)</span>
+                  </div>
+                </div>
+              ) : user.kycStatus !== 'rejected' && (
+                <button
+                  className="btn kyc-verify-btn"
+                  onClick={initiateKYC}
+                  disabled={kycLoading}
+                >
+                  {kycLoading ? 'Initiating...' : '🔐 Verify with DigiLocker'}
+                </button>
+              )}
             </div>
           </div>
 

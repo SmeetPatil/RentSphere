@@ -112,6 +112,10 @@ router.get('/api/rentals', isLoggedIn, async (req, res) => {
                     WHEN l.user_type = 'phone' THEN pu.profile_picture
                 END as owner_profile_picture,
                 CASE
+                    WHEN l.user_type = 'google' THEN u.kyc_verified
+                    WHEN l.user_type = 'phone' THEN pu.kyc_verified
+                END as owner_kyc_verified,
+                CASE
                     WHEN l.user_type = 'google' THEN u.email
                     WHEN l.user_type = 'phone' THEN pu.phone
                 END as owner_contact,
@@ -146,7 +150,7 @@ router.get('/api/rentals', isLoggedIn, async (req, res) => {
         }
         
         query += `
-            GROUP BY l.id, u.name, u.profile_picture, u.email, pu.name, pu.profile_picture, pu.phone
+            GROUP BY l.id, u.name, u.profile_picture, u.kyc_verified, u.email, pu.name, pu.profile_picture, pu.kyc_verified, pu.phone
             ORDER BY l.created_at DESC
             LIMIT $${paramCount} OFFSET $${paramCount + 1}
         `;
@@ -382,6 +386,10 @@ router.get('/api/rentals/:id', isLoggedIn, async (req, res) => {
                     WHEN l.user_type = 'google' THEN u.profile_picture
                     WHEN l.user_type = 'phone' THEN pu.profile_picture
                 END as owner_profile_picture,
+                CASE
+                    WHEN l.user_type = 'google' THEN u.kyc_verified
+                    WHEN l.user_type = 'phone' THEN pu.kyc_verified
+                END as owner_kyc_verified,
                 CASE
                     WHEN l.user_type = 'google' THEN u.email
                     WHEN l.user_type = 'phone' THEN pu.phone

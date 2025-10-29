@@ -103,37 +103,22 @@ const NearbyRentalsMap = () => {
   const createCustomIcon = (listing) => {
     const emoji = getCategoryEmoji(listing.category);
     
-    // Create a unique class name for this specific marker
-    const uniqueClassName = `custom-black-pin-${listing.id}`;
-    
-    // Inline styles to ensure the black circle renders properly
+    // Pure CSS pin design - simple and reliable
     const iconHtml = `
-      <div style="
-        width: 45px;
-        height: 45px;
-        background-color: #000000;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        position: relative;
-      ">
-        <span style="
-          font-size: 22px;
-          line-height: 1;
-          display: block;
-        ">${emoji}</span>
+      <div class="custom-map-pin">
+        <div class="pin-head">
+          <span class="pin-emoji">${emoji}</span>
+        </div>
+        <div class="pin-tail"></div>
       </div>
     `;
     
     return L.divIcon({
-      className: uniqueClassName,
+      className: 'custom-pin-icon',
       html: iconHtml,
-      iconSize: [45, 45],
-      iconAnchor: [22.5, 22.5], // Center the icon on the position
-      popupAnchor: [0, -22.5]
+      iconSize: [40, 50],
+      iconAnchor: [20, 50],
+      popupAnchor: [0, -50]
     });
   };
 
